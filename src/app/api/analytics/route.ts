@@ -14,9 +14,11 @@ export const GET = route(async (req, ctx) => {
   } catch {
     tz = "UTC";
   }
+  // MongoDB's tz database lacks some aliases (e.g. Asia/Calcutta) → bucket with the zone's current UTC offset.
+  const mtz = utcOffset(tz);
   const website = new Types.ObjectId(ctx.website.id);
   const since = new Date(Date.now() - days * DAY);
-  const day = { $dateToString: { format: "%Y-%m-%d", date: "$createdAt", timezone: tz } };
+  const day = { $dateToString: { format: "%Y-%m-%d", date: "$createdAt", timezone: mtz } };
 
   const [convDays, convStats, ratingDist, heat, topPages, visitorDays, sources, newContacts, msgCount] = await Promise.all([
     Conversation.aggregate([{ $match: { website, createdAt: { $gte: since } } }, { $group: { _id: day, n: { $sum: 1 } } }, { $sort: { _id: 1 } }]),
@@ -37,13 +39,13 @@ export const GET = route(async (req, ctx) => {
     Conversation.aggregate([{ $match: { website, "rating.score": { $gte: 1 }, createdAt: { $gte: since } } }, { $group: { _id: "$rating.score", n: { $sum: 1 } } }]),
     Message.aggregate([
       { $match: { website, from: "visitor", createdAt: { $gte: since } } },
-      { $project: { p: { $dateToParts: { date: "$createdAt", timezone: tz } }, dow: { $dayOfWeek: { date: "$createdAt", timezone: tz } } } },
+      { $project: { p: { $dateToParts: { date: "$createdAt", timezone: mtz } }, dow: { $dayOfWeek: { date: "$createdAt", timezone: mtz } } } },
       { $group: { _id: { d: "$dow", h: "$p.hour" }, n: { $sum: 1 } } },
     ]),
     PageView.aggregate([{ $match: { website, at: { $gte: since } } }, { $group: { _id: "$path", n: { $sum: 1 }, avg: { $avg: "$duration" } } }, { $sort: { n: -1 } }, { $limit: 8 }]),
     PageView.aggregate([
       { $match: { website, at: { $gte: since } } },
-      { $group: { _id: { d: { $dateToString: { format: "%Y-%m-%d", date: "$at", timezone: tz } }, c: "$contact" } } },
+      { $group: { _id: { d: { $dateToString: { format: "%Y-%m-%d", date: "$at", timezone: mtz } }, c: "$contact" } } },
       { $group: { _id: "$_id.d", n: { $sum: 1 } } },
       { $sort: { _id: 1 } },
     ]),
@@ -89,3 +91,17 @@ export const GET = route(async (req, ctx) => {
     sources: [...srcMap.entries()].map(([source, visitors]) => ({ source, visitors })).sort((a, b) => b.visitors - a.visitors).slice(0, 8),
   });
 });
+
+function utcOffset(tz: string) {
+  try {
+    const now = new Date();
+    const parts = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: tz, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }).formatToParts(now).map((p) => [p.type, p.value]));
+    const asUtc = Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour % 24, +parts.minute);
+    const mins = Math.round((asUtc - Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), now.getUTCHours(), now.getUTCMinutes())) / 60000);
+    const sign = mins < 0 ? "-" : "+";
+    const a = Math.abs(mins);
+    return `${sign}${String(Math.floor(a / 60)).padStart(2, "0")}:${String(a % 60).padStart(2, "0")}`;
+  } catch {
+    return "+00:00";
+  }
+}

@@ -11,6 +11,8 @@ const g = globalThis as unknown as { _ccScheduler?: boolean };
 export function startScheduler() {
   if (g._ccScheduler || process.env.CHATCRIP_DISABLE_SCHEDULER === "1") return;
   g._ccScheduler = true;
+  if (process.env.NODE_ENV === "production" && !process.env.NEXTAUTH_SECRET)
+    console.warn("[chatcrip] NEXTAUTH_SECRET is not set — using an insecure built-in default. Set it (Render generates one from render.yaml).");
   const safe = (name: string, fn: () => Promise<void>) => async () => {
     try {
       await dbConnect();

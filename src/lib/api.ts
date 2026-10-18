@@ -72,6 +72,11 @@ export function pageParams(url: URL, def = 30, max = 100) {
   return { limit, page, skip: (page - 1) * limit };
 }
 
+/**
+ * Best-effort client IP for rate limiting. Proxies (Render, nginx) *append* to X-Forwarded-For, so the right-most
+ * entry is the one our proxy saw; the left-most is client-controlled and trivially spoofable.
+ */
 export function clientIp(req: Request) {
-  return (req.headers.get("cf-connecting-ip") || req.headers.get("x-forwarded-for")?.split(",")[0] || req.headers.get("x-real-ip") || "local").trim();
+  const xff = req.headers.get("x-forwarded-for")?.split(",").map((s) => s.trim()).filter(Boolean);
+  return (req.headers.get("cf-connecting-ip") || xff?.[xff.length - 1] || req.headers.get("x-real-ip") || "local").trim();
 }

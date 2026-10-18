@@ -204,7 +204,7 @@ function Shell({ ctx, children }: { ctx: ShellCtx; children: React.ReactNode }) 
           {NAV.filter((n) => ["inbox", "visitors", "contacts", "analytics", "settings"].includes(n.key)).map((n) => (
             <Link key={n.key} href={n.href} aria-current={active(n.href) ? "page" : undefined} className={clsx("relative flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-medium", active(n.href) ? "text-brand" : "text-muted")}>
               <n.icon className="size-5" />
-              {n.label.split(" ").pop()}
+              {n.key === "visitors" ? "Visitors" : n.label.split(" ").pop()}
               {n.key === "inbox" && unread > 0 && <span className="absolute right-[22%] top-1 rounded-full bg-accent px-1 text-[9px] font-bold text-white">{unread}</span>}
             </Link>
           ))}

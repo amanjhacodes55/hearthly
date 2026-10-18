@@ -240,7 +240,7 @@ export default function Thread({
         </button>
         <Avatar name={contact?.name || contact?.email || "Visitor"} size={34} online={contact?.online} />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-bold">{contact?.name || contact?.email || "Anonymous visitor"}</p>
+          <p className="truncate text-sm font-bold">{contact?.name || contact?.email || `Visitor ${conversation.contact_id.slice(-4)}`}</p>
           <p className="truncate text-xs text-muted">
             {flag(contact?.geo.country)} {[contact?.geo.city, contact?.geo.country_name].filter(Boolean).join(", ") || "Unknown"} · {conversation.channel}
             {contact?.online && contact.current_page && <span className="text-success"> · on {contact.current_page.title || contact.current_page.url}</span>}

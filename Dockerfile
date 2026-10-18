@@ -16,5 +16,5 @@ COPY --from=build --chown=node:node /app/.next/static ./.next/static
 COPY --from=build --chown=node:node /app/public ./public
 EXPOSE 10000
 USER node
-# NEXTAUTH_URL falls back to Render's public URL.
-CMD ["sh", "-c", "export NEXTAUTH_URL=${NEXTAUTH_URL:-$RENDER_EXTERNAL_URL}; exec node server.js"]
+# NEXTAUTH_URL falls back to Render's public URL (left unset when neither exists — an empty value breaks NextAuth).
+CMD ["sh", "-c", "u=${NEXTAUTH_URL:-$RENDER_EXTERNAL_URL}; if [ -n \"$u\" ]; then export NEXTAUTH_URL=$u; else unset NEXTAUTH_URL; fi; exec node server.js"]

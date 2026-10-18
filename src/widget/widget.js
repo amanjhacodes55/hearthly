@@ -105,7 +105,7 @@
       ".launch:hover{transform:translateY(-2px) scale(1.03)}.launch:focus-visible,button:focus-visible,a:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px solid var(--c);outline-offset:2px}" +
       ".badge{position:absolute;top:-4px;" + (side === "left" ? "left" : "right") + ":-4px;min-width:20px;height:20px;border-radius:10px;background:#ef4444;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 5px;border:2px solid #fff}" +
       ".panel{position:absolute;bottom:72px;" + side + ":0;width:380px;height:min(620px,calc(100vh - 110px));background:var(--bg);border-radius:var(--r);box-shadow:0 24px 60px -12px rgba(0,0,0,.4);display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--bd);transform-origin:bottom " + side + ";animation:pop .22s cubic-bezier(.2,.9,.3,1.2)}" +
-      "@keyframes pop{from{opacity:0;transform:scale(.92) translateY(10px)}}@media(max-width:480px){.panel{position:fixed;inset:0;width:auto;height:auto;border-radius:0;bottom:0}}" +
+      "@keyframes pop{from{opacity:0;transform:scale(.92) translateY(10px)}}@media(max-width:480px){.panel{position:fixed;inset:0;width:auto;height:auto;border-radius:0;bottom:0}.cc.open .launch{display:none}}" +
       ".hd{background:var(--g);color:#fff;padding:16px 16px 14px;position:relative}.hd h2{margin:0;font-size:17px;font-weight:700;letter-spacing:-.01em}.hd p{margin:3px 0 0;font-size:12.5px;opacity:.92;display:flex;align-items:center;gap:6px}" +
       ".dot{width:8px;height:8px;border-radius:50%;background:#4ade80;box-shadow:0 0 0 2px rgba(255,255,255,.35)}.dot.off{background:#fbbf24}" +
       ".team{display:flex;margin-bottom:8px}.av{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.8);margin-right:-8px;background:rgba(255,255,255,.25);color:#fff;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;overflow:hidden}.av img{width:100%;height:100%;object-fit:cover}" +
@@ -296,7 +296,7 @@
     var prevBody = root.querySelector(".body"), atBottom = !prevBody || prevBody.scrollHeight - prevBody.scrollTop - prevBody.clientHeight < 80;
     root.innerHTML = ""; // structure only; all user content below is inserted as text nodes
     root.appendChild(el("style", { text: css(w) }));
-    wrap = el("div", { class: "cc" });
+    wrap = el("div", { class: "cc" + (S.open ? " open" : "") });
     if (S.open) {
       var panel = el("div", { class: "panel", role: "dialog", "aria-label": w.title || t("title") }, [header(w), S.view === "help" ? helpBody() : chatBody(w), S.view === "help" ? null : footer(w)]);
       if (w.allowAttachments) {

@@ -283,7 +283,7 @@ export default function Inbox({ me, website }: { me: { id: string; name: string 
           </div>
           <div className="flex gap-1 overflow-x-auto scrollbar-thin" role="tablist" aria-label="Status">
             {STATUSES.map((s) => (
-              <button key={s.key} role="tab" aria-selected={filters.status === s.key} onClick={() => setFilters((f) => ({ ...f, status: s.key }))} className={clsx("shrink-0 rounded-lg px-2.5 py-1 text-xs font-semibold", filters.status === s.key ? "bg-text text-bg" : "text-muted hover:bg-surface-2")}>
+              <button key={s.key} role="tab" aria-selected={filters.status === s.key} onClick={() => setFilters((f) => ({ ...f, status: s.key }))} className={clsx("shrink-0 rounded-lg px-2 py-1 text-xs font-semibold", filters.status === s.key ? "bg-text text-bg" : "text-muted hover:bg-surface-2")}>
                 {s.label}
                 {s.key === "open" && counts ? <span className="ml-1 opacity-70">{counts.open}</span> : s.key === "pending" && counts?.pending ? <span className="ml-1 opacity-70">{counts.pending}</span> : null}
               </button>
