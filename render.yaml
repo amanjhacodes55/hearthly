@@ -1,0 +1,27 @@
+# Render Blueprint — Dashboard → New → Blueprint → select this repo.
+# The only value you must provide is MONGODB_URI (e.g. a free MongoDB Atlas M0 connection string).
+services:
+  - type: web
+    name: chatcrip
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: NEXTAUTH_SECRET
+        generateValue: true
+      - key: WIDGET_TOKEN_SECRET
+        generateValue: true
+      - key: WEBHOOK_SIGNING_SECRET
+        generateValue: true
+      - key: SMTP_URL
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
