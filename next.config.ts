@@ -15,6 +15,8 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   compress: true,
   distDir: process.env.NEXT_DIST_DIR || ".next",
+  // Keep visited dashboard pages in the client router cache briefly so back/forth navigation is instant.
+  experimental: { staleTimes: { dynamic: 30, static: 180 } },
   async headers() {
     return [
       // The dashboard must never be framed by other sites (clickjacking); the widget runs in a Shadow DOM, not an iframe.

@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { dbConnect } from "@/lib/db";
 import { sessionUserId } from "@/lib/auth";
@@ -9,8 +10,8 @@ export type Ctx = {
   website: { id: string; publicId: string; name: string; role: Role };
 };
 
-/** Signed-in user + their current website (website.id is "" if they have none yet). */
-export async function getCtx(): Promise<Ctx | null> {
+/** Signed-in user + their current website (website.id is "" if they have none yet). Memoized per request, so layout + page share one lookup. */
+export const getCtx = cache(async (): Promise<Ctx | null> => {
   const uid = await sessionUserId();
   if (!uid) return null;
   await dbConnect();
@@ -25,7 +26,7 @@ export async function getCtx(): Promise<Ctx | null> {
   if (!ws) return { user, website: { id: "", publicId: "", name: "", role: "agent" } };
   const role = (ws.members.find((m) => String(m.user) === user.id)?.role || "agent") as Role;
   return { user, website: { id: String(ws._id), publicId: ws.publicId, name: ws.name, role } };
-}
+});
 
 export async function requireCtx(next = "/app"): Promise<Ctx> {
   const c = await getCtx();
