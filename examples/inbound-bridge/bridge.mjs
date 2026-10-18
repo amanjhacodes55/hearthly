@@ -1,15 +1,15 @@
-// A tiny "channel bridge": lets you chat into ChatCrip from your terminal as if you were
+// A tiny "channel bridge": lets you chat into Hearthly from your terminal as if you were
 // a user on another platform (Telegram/Slack/WhatsApp…), and prints operator replies.
 //
-//   CHATCRIP_URL=http://localhost:3005 CHATCRIP_KEY=cc_key_... node bridge.mjs
+//   HEARTHLY_URL=http://localhost:3005 HEARTHLY_KEY=hly_key_... node bridge.mjs
 //
 // The key needs messages:write + conversations:read. Replies are fetched by polling the REST API
 // (a production bridge would subscribe to the `message.sent` webhook instead).
 import readline from "node:readline";
 
-const CC = process.env.CHATCRIP_URL || "http://localhost:3005";
-const KEY = process.env.CHATCRIP_KEY;
-if (!KEY) throw new Error("Set CHATCRIP_KEY");
+const CC = process.env.HEARTHLY_URL || "http://localhost:3005";
+const KEY = process.env.HEARTHLY_KEY;
+if (!KEY) throw new Error("Set HEARTHLY_KEY");
 const H = { Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" };
 const user = { external_id: process.env.EXTERNAL_ID || "cli-user-1", name: process.env.NAME || "Terminal User" };
 let conversation = null;

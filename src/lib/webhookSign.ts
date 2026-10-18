@@ -2,10 +2,10 @@ import { createHmac } from "node:crypto";
 import { safeEqual } from "./ids";
 
 /**
- * Webhook signatures — header `X-ChatCrip-Signature: t=<unix seconds>,v1=<hex hmac>`
+ * Webhook signatures — header `Hearthly-Signature: t=<unix seconds>,v1=<hex hmac>`
  * where hmac = HMAC-SHA256(secret, `${t}.${rawBody}`).
  */
-export const SIGNATURE_HEADER = "X-ChatCrip-Signature";
+export const SIGNATURE_HEADER = "Hearthly-Signature";
 
 export function signPayload(secret: string, body: string, timestamp = Math.floor(Date.now() / 1000)) {
   const v1 = createHmac("sha256", secret).update(`${timestamp}.${body}`).digest("hex");

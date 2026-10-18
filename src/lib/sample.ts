@@ -83,7 +83,7 @@ export async function seedSample(siteId: string, ownerId: string, ownerName: str
       lastSeenAt: lastSeen,
       sessions: 1 + ((i * 3) % 7),
       pageViews: 4 + i,
-      currentPage: { url: `https://demo.chatcrip.example.test${current}`, title: current === "/" ? "Home" : current.slice(1), since: lastSeen },
+      currentPage: { url: `https://demo.hearthly.example.test${current}`, title: current === "/" ? "Home" : current.slice(1), since: lastSeen },
       eventNames: i % 2 === 0 ? ["signed_up", "viewed_pricing"] : ["viewed_pricing"],
       source: "widget",
       sessionId: rand(8),
@@ -92,7 +92,7 @@ export async function seedSample(siteId: string, ownerId: string, ownerName: str
     const views = [];
     for (let k = 0; k < 4 + i; k++) {
       const path = pages[(i + k) % pages.length];
-      views.push({ website: siteId, contact: c._id, url: `https://demo.chatcrip.example.test${path}`, path, title: path === "/" ? "Home" : path.slice(1), referrer: k === 0 ? refs[i % refs.length] : "", at: new Date(lastSeen.getTime() - (4 + i - k) * 95_000 - k * DAY * (i % 2)), duration: 20 + ((k * 37) % 180) });
+      views.push({ website: siteId, contact: c._id, url: `https://demo.hearthly.example.test${path}`, path, title: path === "/" ? "Home" : path.slice(1), referrer: k === 0 ? refs[i % refs.length] : "", at: new Date(lastSeen.getTime() - (4 + i - k) * 95_000 - k * DAY * (i % 2)), duration: 20 + ((k * 37) % 180) });
     }
     await PageView.insertMany(views);
     await TrackedEvent.insertMany((c.eventNames || []).map((n, k) => ({ website: siteId, contact: c._id, name: n, props: n === "signed_up" ? { plan: p.data.plan || "free" } : {}, at: new Date(lastSeen.getTime() - k * 3600_000) })));

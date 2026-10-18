@@ -1,14 +1,14 @@
-// Minimal third-party ChatCrip integration (zero dependencies, Node 18+).
+// Minimal third-party Hearthly integration (zero dependencies, Node 18+).
 // Implements the OAuth 2.0 authorization-code flow with PKCE, then uses the token to post a message.
 //
-//   CHATCRIP_URL=http://localhost:3005 CLIENT_ID=cc_app_... CLIENT_SECRET=cc_cs_... node index.mjs
+//   HEARTHLY_URL=http://localhost:3005 CLIENT_ID=hly_app_... CLIENT_SECRET=hly_cs_... node index.mjs
 //   open http://localhost:4000
 //
-// Register the app in ChatCrip → Developers with redirect URI http://localhost:4000/callback.
+// Register the app in Hearthly → Developers with redirect URI http://localhost:4000/callback.
 import http from "node:http";
 import crypto from "node:crypto";
 
-const CC = process.env.CHATCRIP_URL || "http://localhost:3005";
+const CC = process.env.HEARTHLY_URL || "http://localhost:3005";
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET || ""; // optional: omit to act as a public (PKCE-only) client
 const PORT = Number(process.env.PORT || 4000);
@@ -34,7 +34,7 @@ http
     const url = new URL(req.url, `http://localhost:${PORT}`);
     try {
       if (url.pathname === "/") {
-        return html(res, `<h1>Demo integration</h1><p>${tokens ? `Connected to website <code>${tokens.website_id}</code>. <a href="/send">Post a message</a>` : `<a href="/connect">Connect ChatCrip →</a>`}</p>`);
+        return html(res, `<h1>Demo integration</h1><p>${tokens ? `Connected to website <code>${tokens.website_id}</code>. <a href="/send">Post a message</a>` : `<a href="/connect">Connect Hearthly →</a>`}</p>`);
       }
       if (url.pathname === "/connect") {
         const verifier = b64url(crypto.randomBytes(32));

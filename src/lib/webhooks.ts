@@ -45,11 +45,11 @@ export async function attemptDelivery(id: string) {
   const sig = signPayload(decrypt(hook.secretEnc), body);
   const headers = {
     "Content-Type": "application/json",
-    "User-Agent": "ChatCrip-Webhooks/1.0",
+    "User-Agent": "Hearthly-Webhooks/1.0",
     [SIGNATURE_HEADER]: sig.header,
-    "X-ChatCrip-Event": d.event || "",
-    "X-ChatCrip-Delivery": String(d._id),
-    "X-ChatCrip-Timestamp": String(sig.timestamp),
+    "Hearthly-Event": d.event || "",
+    "Hearthly-Delivery": String(d._id),
+    "Hearthly-Timestamp": String(sig.timestamp),
   };
   const started = Date.now();
   let status = 0;

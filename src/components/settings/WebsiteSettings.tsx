@@ -14,7 +14,7 @@ export function CodeBlock({ code, label }: { code: string; label?: string }) {
   return (
     <div className="relative">
       {label && <p className="label">{label}</p>}
-      <pre className="overflow-x-auto rounded-xl bg-[#0b1114] p-4 pr-12 text-[12.5px] leading-relaxed text-teal-50">
+      <pre className="overflow-x-auto rounded-xl bg-[#1a1123] p-4 pr-12 text-[12.5px] leading-relaxed text-ember-50">
         <code>{code}</code>
       </pre>
       <button className="absolute right-2 top-2 rounded-lg bg-white/10 p-1.5 text-white hover:bg-white/20" style={label ? { top: "1.9rem" } : undefined} aria-label="Copy code" onClick={() => navigator.clipboard?.writeText(code).then(() => toast("Copied"))}>
@@ -56,13 +56,13 @@ export default function WebsiteSettings({ ctx }: { ctx: SettingsCtx }) {
           label="JavaScript API (optional)"
           code={`<script>
   // queue calls before the widget loads
-  window.ChatCrip = window.ChatCrip || [];
-  ChatCrip.push(["set", "user:email", "ada@example.com"]);
-  ChatCrip.push(["set", "user:nickname", "Ada Lovelace"]);
-  ChatCrip.push(["set", "session:data", [["plan", "pro"], ["seats", 12]]]);
+  window.Hearthly = window.Hearthly || [];
+  Hearthly.push(["set", "user:email", "ada@example.com"]);
+  Hearthly.push(["set", "user:nickname", "Ada Lovelace"]);
+  Hearthly.push(["set", "session:data", [["plan", "pro"], ["seats", 12]]]);
 </script>
-<!-- after load: ChatCrip.open(), ChatCrip.identify({...}), ChatCrip.track("checkout", {total: 49}),
-     ChatCrip.on("message:received", m => console.log(m)) -->`}
+<!-- after load: Hearthly.open(), Hearthly.identify({...}), Hearthly.track("checkout", {total: 49}),
+     Hearthly.on("message:received", m => console.log(m)) -->`}
         />
       </Card>
       {ctx.admin && (
@@ -94,9 +94,9 @@ export default function WebsiteSettings({ ctx }: { ctx: SettingsCtx }) {
           <CodeBlock code={f.identitySecret} label="Secret (keep it server-side)" />
           <CodeBlock
             label="Compute user_hash on your server (Node)"
-            code={`const user_hash = require("crypto").createHmac("sha256", process.env.CHATCRIP_IDENTITY_SECRET)
+            code={`const user_hash = require("crypto").createHmac("sha256", process.env.HEARTHLY_IDENTITY_SECRET)
   .update(user.email.toLowerCase()).digest("hex");
-// then in the page: ChatCrip.identify({ email: user.email, name: user.name, user_hash })`}
+// then in the page: Hearthly.identify({ email: user.email, name: user.name, user_hash })`}
           />
           <button className="btn-outline btn-sm mt-3" onClick={async () => confirm("Rotate the secret? Existing hashes stop verifying.") && (await api("/api/websites/current", { method: "PATCH", json: { rotateIdentitySecret: true } }), reload(), toast("Secret rotated"))}>
             <RefreshCw className="size-3.5" /> Rotate secret

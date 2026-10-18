@@ -351,7 +351,7 @@ export default function Inbox({ me, website }: { me: { id: string; name: string 
                               {c.last_message?.text || "No messages yet"}
                             </span>
                           )}
-                          {c.unread > 0 && <span className="ml-auto shrink-0 rounded-full bg-accent px-1.5 text-[10px] font-bold text-white">{c.unread}</span>}
+                          {c.unread > 0 && <span className="ml-auto shrink-0 rounded-full bg-accent px-1.5 text-[10px] font-bold text-accent-fg">{c.unread}</span>}
                         </span>
                         {(c.tags.length > 0 || assignee || c.status !== "open") && (
                           <span className="mt-1.5 flex items-center gap-1 overflow-hidden">

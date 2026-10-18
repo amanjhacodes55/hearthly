@@ -5,14 +5,14 @@ import { processDueDeliveries } from "@/lib/webhooks";
 import { setConversationStatus } from "@/lib/chat";
 import { publish } from "@/lib/bus";
 
-const g = globalThis as unknown as { _ccScheduler?: boolean };
+const g = globalThis as unknown as { _hlyScheduler?: boolean };
 
 /** In-app job loop (single instance): webhook retries every 15s; snooze wake-ups + auto-resolve every 2 min. */
 export function startScheduler() {
-  if (g._ccScheduler || process.env.CHATCRIP_DISABLE_SCHEDULER === "1") return;
-  g._ccScheduler = true;
+  if (g._hlyScheduler || process.env.HEARTHLY_DISABLE_SCHEDULER === "1") return;
+  g._hlyScheduler = true;
   if (process.env.NODE_ENV === "production" && !process.env.NEXTAUTH_SECRET)
-    console.warn("[chatcrip] NEXTAUTH_SECRET is not set — using a random per-process secret (sessions reset on restart). Set it (Render generates one from render.yaml).");
+    console.warn("[hearthly] NEXTAUTH_SECRET is not set — using a random per-process secret (sessions reset on restart). Set it (Render generates one from render.yaml).");
   const safe = (name: string, fn: () => Promise<void>) => async () => {
     try {
       await dbConnect();

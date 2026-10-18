@@ -1,0 +1,1302 @@
+openapi: 3.1.0
+info:
+  title: Hearthly API
+  version: 1.0.0
+  summary: Public REST API v1 and OAuth 2.0 endpoints of Hearthly, the open-source live chat & customer messaging platform.
+  description: |
+    The public, stable surface of the Hearthly API: REST v1 (`/api/v1/**`) and the OAuth 2.0 token endpoints.
+
+    **Authentication.** Send `Authorization: Bearer <token>` where the token is either a workspace API key
+    (`hly_key_…`, created in Settings → API, with a chosen set of scopes) or an OAuth access token (`hly_at_…`,
+    obtained through the authorization-code flow). Every token belongs to exactly one website (workspace); all
+    requests act on that website.
+
+    **Errors.** REST v1 errors always have the shape `{ "error": { "code", "message" } }`. Codes:
+    `unauthorized` (401), `insufficient_scope` (403), `not_found` (404), `bad_request` (400/413),
+    `validation_failed` (422), `rate_limited` (429), `server_error` (500).
+    The OAuth endpoints use RFC 6749 errors instead: `{ "error", "error_description"? }`.
+
+    **Rate limits.** 120 requests burst, refilling at 2 requests/second, per token. Responses carry
+    `X-RateLimit-Limit` and `X-RateLimit-Remaining`; a 429 also carries `Retry-After` (seconds).
+
+    **Bodies.** JSON, max 256 KB.
+
+    **Pagination.** List endpoints take `page` (default 1) and `limit` (default 20, max 100) and return a
+    `pagination` object `{ page, limit, total, has_more }`.
+  license:
+    name: AGPL-3.0-or-later
+    identifier: AGPL-3.0-or-later
+servers:
+  - url: http://localhost:3005
+    description: Local development
+  - url: https://{host}
+    description: Your Hearthly deployment
+    variables:
+      host:
+        default: YOUR-HOST
+        description: Hostname of your Hearthly instance.
+tags:
+  - name: Conversations
+  - name: Messages
+  - name: Contacts
+  - name: Website
+  - name: Webhooks
+  - name: Inbound
+    description: Custom channel bridge — post visitor messages from any channel.
+  - name: OAuth
+security:
+  - bearerAuth: []
+paths:
+  /api/v1/conversations:
+    get:
+      tags: [Conversations]
+      operationId: listConversations
+      summary: List conversations
+      description: Conversations of the token's website, most recently updated first. Each item embeds its contact.
+      security:
+        - bearerAuth: []
+        - oauth2: [conversations:read]
+      x-required-scope: conversations:read
+      parameters:
+        - name: status
+          in: query
+          description: Filter by status. Other values are ignored.
+          schema: { type: string, enum: [open, pending, resolved] }
+        - name: contact_id
+          in: query
+          description: Only conversations of this contact (24-hex ID; ignored if malformed).
+          schema: { $ref: '#/components/schemas/ObjectId' }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: A page of conversations.
+          headers:
+            X-RateLimit-Limit: { $ref: '#/components/headers/X-RateLimit-Limit' }
+            X-RateLimit-Remaining: { $ref: '#/components/headers/X-RateLimit-Remaining' }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, pagination]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Conversation' }
+                  pagination: { $ref: '#/components/schemas/Pagination' }
+              example:
+                data:
+                  - $ref: '#/components/examples/ConversationValue/value'
+                pagination: { page: 1, limit: 20, total: 1, has_more: false }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/conversations/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ConversationId'
+    get:
+      tags: [Conversations]
+      operationId: getConversation
+      summary: Get a conversation
+      security:
+        - bearerAuth: []
+        - oauth2: [conversations:read]
+      x-required-scope: conversations:read
+      responses:
+        '200':
+          description: The conversation, with its contact embedded.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/Conversation' }
+              examples:
+                conversation:
+                  value:
+                    data:
+                      id: 66f1a2b3c4d5e6f7a8b9c0d1
+                      status: open
+                      snoozed_until: null
+                      assignee_id: 66e0aa11bb22cc33dd44ee55
+                      tags: [billing]
+                      subject: ''
+                      channel: widget
+                      last_message: { text: Can I switch to annual billing?, from: visitor, at: '2026-10-14T09:12:40.000Z' }
+                      unread: 1
+                      visitor_unread: 0
+                      visitor_read_at: null
+                      rating: null
+                      first_response_at: null
+                      resolved_at: null
+                      created_at: '2026-10-14T09:12:40.000Z'
+                      updated_at: '2026-10-14T09:12:40.000Z'
+                      contact_id: 66f1a2b3c4d5e6f7a8b9c0c1
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+    patch:
+      tags: [Conversations]
+      operationId: updateConversation
+      summary: Update a conversation
+      description: |
+        Change status, tags or assignee. Resolving fires the `conversation.resolved` webhook. Setting `open` or
+        `resolved` clears any snooze. An empty body returns the conversation unchanged.
+      security:
+        - bearerAuth: []
+        - oauth2: [conversations:write]
+      x-required-scope: conversations:write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                status:
+                  type: string
+                  enum: [open, pending, resolved]
+                tags:
+                  type: array
+                  description: Replaces the tag list.
+                  maxItems: 20
+                  items: { type: string, maxLength: 40 }
+                assignee_id:
+                  description: User ID of a team member, or null to unassign.
+                  oneOf:
+                    - $ref: '#/components/schemas/ObjectId'
+                    - type: 'null'
+            example:
+              status: resolved
+              tags: [billing, annual-plan]
+      responses:
+        '200':
+          description: The updated conversation.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/Conversation' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/conversations/{id}/messages:
+    parameters:
+      - $ref: '#/components/parameters/ConversationId'
+    get:
+      tags: [Messages]
+      operationId: listMessages
+      summary: List messages of a conversation
+      description: |
+        Page 1 holds the most recent messages; within a page, messages are ordered oldest → newest.
+        Private notes (`from: note`) and system lines (`from: system`) are included.
+      security:
+        - bearerAuth: []
+        - oauth2: [conversations:read]
+      x-required-scope: conversations:read
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: A page of messages.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, pagination]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Message' }
+                  pagination: { $ref: '#/components/schemas/Pagination' }
+              example:
+                data:
+                  - id: 66f1a2b3c4d5e6f7a8b9c101
+                    conversation_id: 66f1a2b3c4d5e6f7a8b9c0d1
+                    from: visitor
+                    author: { id: 66f1a2b3c4d5e6f7a8b9c0c1, name: Maya Fischer, avatar: '' }
+                    text: Can I switch to annual billing?
+                    attachments: []
+                    actions: []
+                    via: ''
+                    created_at: '2026-10-14T09:12:40.000Z'
+                  - id: 66f1a2b3c4d5e6f7a8b9c103
+                    conversation_id: 66f1a2b3c4d5e6f7a8b9c0d1
+                    from: operator
+                    author: { id: 66e0aa11bb22cc33dd44ee55, name: Jonas Weber, avatar: '' }
+                    text: Yes! I've switched you over, the invoice follows by email.
+                    attachments:
+                      - { id: 66f1a2b3c4d5e6f7a8b9c2f0, name: invoice-2026-10.pdf, size: 48213, type: application/pdf }
+                    actions: []
+                    via: ''
+                    created_at: '2026-10-14T09:15:30.000Z'
+                pagination: { page: 1, limit: 20, total: 2, has_more: false }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+    post:
+      tags: [Messages]
+      operationId: sendMessage
+      summary: Send a message as operator, bot or private note
+      description: |
+        `operator` and `bot` messages are shown to the visitor and fire the `message.sent` webhook; `note`
+        messages are internal only. To post as the visitor, use `POST /api/v1/inbound`.
+      security:
+        - bearerAuth: []
+        - oauth2: [messages:write]
+      x-required-scope: messages:write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [text]
+              properties:
+                text: { type: string, minLength: 1, maxLength: 5000, description: Trimmed before validation. }
+                from: { type: string, enum: [operator, bot, note], default: operator }
+                author_name: { type: string, maxLength: 60, description: Defaults to the API key or app name. }
+                author_avatar: { type: string, format: uri, maxLength: 500 }
+            example:
+              text: Your order #4821 has shipped 📦
+              from: bot
+              author_name: Order bot
+      responses:
+        '201':
+          description: The created message.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/Message' }
+              example:
+                data:
+                  id: 66f1a2b3c4d5e6f7a8b9c104
+                  conversation_id: 66f1a2b3c4d5e6f7a8b9c0d1
+                  from: bot
+                  author: { id: 'api_key:66f0d3a1b2c3d4e5f6a7b801', name: Order bot, avatar: '' }
+                  text: Your order #4821 has shipped 📦
+                  attachments: []
+                  actions: []
+                  via: Shop backend
+                  created_at: '2026-10-14T10:02:17.000Z'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '413': { $ref: '#/components/responses/TooLarge' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/contacts:
+    get:
+      tags: [Contacts]
+      operationId: listContacts
+      summary: List or search contacts
+      description: Most recently seen first. Contacts merged into another contact are excluded.
+      security:
+        - bearerAuth: []
+        - oauth2: [contacts:read]
+      x-required-scope: contacts:read
+      parameters:
+        - name: email
+          in: query
+          description: Exact email match (case-insensitive).
+          schema: { type: string }
+        - name: q
+          in: query
+          description: Case-insensitive substring match on name or email (first 100 characters used).
+          schema: { type: string }
+        - name: tag
+          in: query
+          description: Only contacts with this tag.
+          schema: { type: string }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: A page of contacts.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, pagination]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Contact' }
+                  pagination: { $ref: '#/components/schemas/Pagination' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+    post:
+      tags: [Contacts]
+      operationId: upsertContact
+      summary: Create or update (upsert) a contact
+      description: |
+        Matches an existing contact by `email` (non-merged), else by exact `external_id`. On a match the contact
+        is updated — given fields overwrite, `tags` are added, `data` keys merged — and `200` is returned with
+        `merged: true`. Otherwise a new contact (`source: api`) is created and `201` is returned.
+        At least one of `email`, `name` or `external_id` is required.
+      security:
+        - bearerAuth: []
+        - oauth2: [contacts:write]
+      x-required-scope: contacts:write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ContactInput' }
+            example:
+              email: maya.fischer@example.test
+              name: Maya Fischer
+              tags: [customer]
+              data: { plan: pro, seats: 5 }
+              external_id: cus_8842
+      responses:
+        '200':
+          description: An existing contact was updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, merged]
+                properties:
+                  data: { $ref: '#/components/schemas/Contact' }
+                  merged: { type: boolean, const: true }
+        '201':
+          description: A new contact was created.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/Contact' }
+              example:
+                data:
+                  $ref: '#/components/examples/ContactValue/value'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/contacts/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Contact ID.
+        schema: { $ref: '#/components/schemas/ObjectId' }
+    get:
+      tags: [Contacts]
+      operationId: getContact
+      summary: Get a contact
+      description: Also returns contacts that were merged into another contact.
+      security:
+        - bearerAuth: []
+        - oauth2: [contacts:read]
+      x-required-scope: contacts:read
+      responses:
+        '200':
+          description: The contact.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/Contact' }
+              examples:
+                contact:
+                  $ref: '#/components/examples/ContactEnvelope'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+    patch:
+      tags: [Contacts]
+      operationId: updateContact
+      summary: Update a contact
+      description: |
+        `tags` replaces the tag list; `data` is merged per key (keys must match `^[A-Za-z0-9_-]{1,60}$`, others
+        are dropped). Email uniqueness is not checked.
+      security:
+        - bearerAuth: []
+        - oauth2: [contacts:write]
+      x-required-scope: contacts:write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ContactInput' }
+            example:
+              company: Fischer Design GmbH
+              data: { plan: business }
+      responses:
+        '200':
+          description: The updated contact.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/Contact' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/website:
+    get:
+      tags: [Website]
+      operationId: getWebsite
+      summary: Get the token's website and token info
+      description: |
+        Works with any valid token — no scope is enforced (the `website:read` scope exists but is not required here).
+      security:
+        - bearerAuth: []
+        - oauth2: []
+      responses:
+        '200':
+          description: Website and token information.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, token]
+                properties:
+                  data: { $ref: '#/components/schemas/Website' }
+                  token:
+                    type: object
+                    required: [type, name, scopes]
+                    properties:
+                      type: { type: string, enum: [api_key, app] }
+                      name: { type: string, description: API key name or OAuth app name. }
+                      scopes:
+                        type: array
+                        items: { $ref: '#/components/schemas/Scope' }
+              example:
+                data:
+                  id: k7m2p9xq4ram
+                  internal_id: 6650a1b2c3d4e5f6a7b8c9d0
+                  name: Fischer Design Shop
+                  domain: shop.example.test
+                  members: 3
+                  online: true
+                  within_hours: true
+                  created_at: '2026-05-04T10:00:00.000Z'
+                token:
+                  type: api_key
+                  name: Shop backend
+                  scopes: [conversations:read, messages:write, contacts:read, contacts:write]
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/webhooks:
+    get:
+      tags: [Webhooks]
+      operationId: listWebhooks
+      summary: List webhooks
+      description: All webhooks of the website (also those created in the dashboard or by other apps), newest first.
+      security:
+        - bearerAuth: []
+        - oauth2: [webhooks:manage]
+      x-required-scope: webhooks:manage
+      responses:
+        '200':
+          description: The webhooks.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Webhook' }
+              example:
+                data:
+                  - $ref: '#/components/examples/WebhookValue/value'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+    post:
+      tags: [Webhooks]
+      operationId: createWebhook
+      summary: Subscribe a URL to events
+      description: |
+        Returns the signing secret once, in `secret`. Deliveries are `POST`ed JSON
+        `{ id, event, website_id, created_at, data }` signed with
+        `Hearthly-Signature: t=<unix>,v1=<hex HMAC-SHA256(secret, "<t>.<body>")>`.
+        Max 25 webhooks per website. In production, URLs resolving to private network addresses are rejected
+        unless the server sets `ALLOW_PRIVATE_URLS=true`.
+      security:
+        - bearerAuth: []
+        - oauth2: [webhooks:manage]
+      x-required-scope: webhooks:manage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url, events]
+              properties:
+                url: { type: string, format: uri, maxLength: 1000, pattern: '^https?://' }
+                events:
+                  type: array
+                  minItems: 1
+                  items: { $ref: '#/components/schemas/WebhookEvent' }
+                description: { type: string, maxLength: 200, default: '' }
+            example:
+              url: https://bridge.example.test/hearthly
+              events: [message.sent]
+              description: Telegram bridge
+      responses:
+        '201':
+          description: The webhook and its signing secret.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, secret]
+                properties:
+                  data: { $ref: '#/components/schemas/Webhook' }
+                  secret: { type: string, description: 'Signing secret (`whsec_…`). Shown only once.' }
+              example:
+                data:
+                  $ref: '#/components/examples/WebhookValue/value'
+                secret: whsec_Q2x8Vb4nR7kT1mZp9sWc3yLd6fHg
+        '400':
+          description: 'Body is not valid JSON, the URL is not allowed (private address), or the 25-webhook limit was reached (`bad_request`).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example:
+                error: { code: bad_request, message: Limit of 25 webhooks per website }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/webhooks/{id}:
+    delete:
+      tags: [Webhooks]
+      operationId: deleteWebhook
+      summary: Delete a webhook
+      description: Deletes the webhook and its delivery history.
+      security:
+        - bearerAuth: []
+        - oauth2: [webhooks:manage]
+      x-required-scope: webhooks:manage
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { $ref: '#/components/schemas/ObjectId' }
+      responses:
+        '200':
+          description: Deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [deleted]
+                properties:
+                  deleted: { type: boolean, const: true }
+              example: { deleted: true }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/inbound:
+    post:
+      tags: [Inbound]
+      operationId: postInboundMessage
+      summary: Post a visitor message from a custom channel
+      description: |
+        Lets a bridge (Telegram, Slack, WhatsApp, SMS, email…) post a message **from the end user** into Hearthly.
+
+        Contact matching (unless `conversation_id` is given): first by `external_id` stored as
+        `<channel>:<contact.external_id>`, then by `contact.email`; otherwise a new contact is created
+        (`source: channel:<channel>`, tagged with the channel). Existing contacts are not updated.
+
+        Conversation: `conversation_id` if given; otherwise the contact's current conversation if it is not
+        resolved and is on the same channel; otherwise a new conversation on that channel.
+
+        Fires `message.received` (and `contact.created` / `conversation.created` when applicable). Operator and bot
+        replies come back through the `message.sent` webhook — filter on `data.conversation.channel`.
+
+        `data.conversation` in the response is the visitor-facing slice and reflects the state *before* this
+        message was stored.
+      security:
+        - bearerAuth: []
+        - oauth2: [messages:write]
+      x-required-scope: messages:write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                channel:
+                  type: string
+                  pattern: '^[a-z0-9_-]{2,30}$'
+                  default: api
+                  description: Trimmed and lower-cased before validation.
+                conversation_id:
+                  $ref: '#/components/schemas/ObjectId'
+                contact:
+                  type: object
+                  description: Required unless `conversation_id` is given; must contain `external_id` or `email`.
+                  default: {}
+                  properties:
+                    external_id: { type: string, maxLength: 100 }
+                    email: { type: string, format: email, maxLength: 200 }
+                    name: { type: string, maxLength: 100 }
+                    phone: { type: string, maxLength: 40 }
+                text: { type: string, minLength: 1, maxLength: 5000 }
+            example:
+              channel: telegram
+              contact: { external_id: '518822034', name: Maya Fischer }
+              text: Hi! Is the oak desk still in stock?
+      responses:
+        '201':
+          description: The stored visitor message.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: object
+                    required: [message, conversation, conversation_id, contact_id]
+                    properties:
+                      message: { $ref: '#/components/schemas/Message' }
+                      conversation: { $ref: '#/components/schemas/VisitorConversation' }
+                      conversation_id: { $ref: '#/components/schemas/ObjectId' }
+                      contact_id: { $ref: '#/components/schemas/ObjectId' }
+              example:
+                data:
+                  message:
+                    id: 66f3c4d5e6f7a8b9c0d1e201
+                    conversation_id: 66f3c4d5e6f7a8b9c0d1e101
+                    from: visitor
+                    author: { id: 66f3c4d5e6f7a8b9c0d1e001, name: Maya Fischer, avatar: '' }
+                    text: Hi! Is the oak desk still in stock?
+                    attachments: []
+                    actions: []
+                    via: telegram (Telegram bridge)
+                    created_at: '2026-10-14T14:00:00.000Z'
+                  conversation: { id: 66f3c4d5e6f7a8b9c0d1e101, status: open, unread: 0, rating: null, created_at: '2026-10-14T14:00:00.000Z' }
+                  conversation_id: 66f3c4d5e6f7a8b9c0d1e101
+                  contact_id: 66f3c4d5e6f7a8b9c0d1e001
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '413': { $ref: '#/components/responses/TooLarge' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/oauth/token:
+    post:
+      tags: [OAuth]
+      operationId: oauthToken
+      summary: OAuth 2.0 token endpoint
+      description: |
+        - `grant_type=authorization_code`: `code`, `redirect_uri` (must equal the one used at authorization),
+          `client_id`, and either `client_secret` or `code_verifier` (PKCE). Codes are single-use and expire after
+          10 minutes. A client that doesn't send its secret must have used PKCE.
+        - `grant_type=refresh_token`: `refresh_token`, `client_id` (+ `client_secret` if you have one).
+          Refresh tokens rotate: the old access/refresh pair is revoked.
+
+        Client credentials may be sent in the body or with HTTP Basic auth (`client_id:client_secret`,
+        URL-encoded). Access tokens (`hly_at_…`) last 1 hour; refresh tokens (`hly_rt_…`) 90 days.
+        The body may be `application/x-www-form-urlencoded` (per spec) or JSON.
+        Rate limited to 30 requests burst / 1 request per 2 seconds per client IP (`slow_down`, 429).
+      security:
+        - {}
+        - clientBasic: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema: { $ref: '#/components/schemas/TokenRequest' }
+            examples:
+              authorizationCode:
+                summary: Authorization code with PKCE
+                value:
+                  grant_type: authorization_code
+                  code: hly_code_3vX9qLm2Rk8sT1pZ4wYb7nCd5fGh0jKa
+                  redirect_uri: https://app.example.test/callback
+                  client_id: hly_app_k2m7p4q9r3s8t6v5
+                  code_verifier: dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
+              refresh:
+                summary: Refresh
+                value:
+                  grant_type: refresh_token
+                  refresh_token: hly_rt_8fK2pQ9sL4mN7vB1xC6zR3tY5wD0hJgA
+                  client_id: hly_app_k2m7p4q9r3s8t6v5
+                  client_secret: hly_cs_Zp4Lq8Wm2Xv6Ns1Rt9Kc3Yb7Hd5Fg0Ja
+          application/json:
+            schema: { $ref: '#/components/schemas/TokenRequest' }
+      responses:
+        '200':
+          description: Tokens issued.
+          headers:
+            Cache-Control:
+              schema: { type: string, const: no-store }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TokenResponse' }
+              example:
+                access_token: hly_at_mQ3vR8kL2pX7sN4tZ9wB1cY6dF5gH0jK
+                token_type: Bearer
+                expires_in: 3600
+                refresh_token: hly_rt_aB4cD8eF2gH6jK1mN5pQ9rS3tV7wX0yZ
+                scope: conversations:read messages:write
+                website_id: 6650a1b2c3d4e5f6a7b8c9d0
+        '400':
+          description: '`invalid_grant` (unknown, used, expired or mismatched code / refresh token, revoked installation), `invalid_request` (missing `redirect_uri`) or `unsupported_grant_type`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OAuthError' }
+              example: { error: invalid_grant }
+        '401':
+          description: '`invalid_client` — unknown client, wrong secret, or a client without secret that did not use PKCE.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OAuthError' }
+              example: { error: invalid_client, error_description: Unknown client or bad client_secret }
+        '429':
+          description: '`slow_down` — too many token requests from this IP.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OAuthError' }
+              example: { error: slow_down }
+        '500':
+          description: '`server_error`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OAuthError' }
+  /api/oauth/revoke:
+    post:
+      tags: [OAuth]
+      operationId: oauthRevoke
+      summary: Revoke a token (RFC 7009)
+      description: |
+        Revokes an access token or refresh token of this client. Either one revokes the whole access/refresh pair.
+        Unknown tokens also return 200. Client authentication as for the token endpoint (body or HTTP Basic);
+        only `client_id` is strictly required. Body may be form-encoded or JSON.
+      security:
+        - {}
+        - clientBasic: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema: { $ref: '#/components/schemas/RevokeRequest' }
+            example:
+              token: hly_rt_aB4cD8eF2gH6jK1mN5pQ9rS3tV7wX0yZ
+              client_id: hly_app_k2m7p4q9r3s8t6v5
+              client_secret: hly_cs_Zp4Lq8Wm2Xv6Ns1Rt9Kc3Yb7Hd5Fg0Ja
+          application/json:
+            schema: { $ref: '#/components/schemas/RevokeRequest' }
+      responses:
+        '200':
+          description: Revoked (or the token was unknown). Empty body.
+        '401':
+          description: Unknown client or wrong client secret.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OAuthError' }
+              example: { error: invalid_client }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: 'A workspace API key (`hly_key_…`) or an OAuth access token (`hly_at_…`). Required scopes are listed per operation (`x-required-scope`).'
+    oauth2:
+      type: oauth2
+      description: Authorization-code flow (PKCE supported, S256 or plain). Only website owners/admins can approve an installation.
+      flows:
+        authorizationCode:
+          authorizationUrl: http://localhost:3005/oauth/authorize
+          tokenUrl: http://localhost:3005/api/oauth/token
+          refreshUrl: http://localhost:3005/api/oauth/token
+          scopes:
+            conversations:read: Read conversations and messages
+            conversations:write: Update conversations (assign, resolve, tag)
+            messages:write: Send messages as an operator or bot, and post inbound visitor messages
+            contacts:read: Read contacts and their activity
+            contacts:write: Create and update contacts
+            webhooks:manage: Create and delete webhooks
+            website:read: Read basic website information
+    clientBasic:
+      type: http
+      scheme: basic
+      description: OAuth client authentication — `client_id:client_secret` (alternative to sending them in the body).
+  parameters:
+    Page:
+      name: page
+      in: query
+      description: Page number (1-based).
+      schema: { type: integer, minimum: 1, default: 1 }
+    Limit:
+      name: limit
+      in: query
+      description: Items per page.
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    ConversationId:
+      name: id
+      in: path
+      required: true
+      description: Conversation ID.
+      schema: { $ref: '#/components/schemas/ObjectId' }
+  headers:
+    X-RateLimit-Limit:
+      description: Burst size (120).
+      schema: { type: integer }
+    X-RateLimit-Remaining:
+      description: Requests left in the bucket.
+      schema: { type: integer }
+    Retry-After:
+      description: Seconds to wait before retrying.
+      schema: { type: integer }
+  responses:
+    BadRequest:
+      description: Body is not valid JSON (`bad_request`).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example:
+            error: { code: bad_request, message: Invalid JSON body }
+    TooLarge:
+      description: Body larger than 256 KB (`bad_request`).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example:
+            error: { code: bad_request, message: Body too large }
+    Unauthorized:
+      description: Missing, invalid, expired or revoked token.
+      headers:
+        WWW-Authenticate:
+          schema: { type: string }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example:
+            error: { code: unauthorized, message: 'Invalid, expired or revoked token' }
+    InsufficientScope:
+      description: The token lacks the required scope.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example:
+            error: { code: insufficient_scope, message: This token lacks the "conversations:read" scope }
+    NotFound:
+      description: The resource doesn't exist on this website (or the ID is malformed).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example:
+            error: { code: not_found, message: Conversation not found }
+    ValidationFailed:
+      description: 'Body failed validation. `message` lists the issues as `path: message` joined by `; `.'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example:
+            error: { code: validation_failed, message: 'text: String must contain at least 1 character(s)' }
+    RateLimited:
+      description: Rate limit exceeded (burst 120, 2 req/s sustained, per token).
+      headers:
+        X-RateLimit-Limit: { $ref: '#/components/headers/X-RateLimit-Limit' }
+        X-RateLimit-Remaining: { $ref: '#/components/headers/X-RateLimit-Remaining' }
+        Retry-After: { $ref: '#/components/headers/Retry-After' }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example:
+            error: { code: rate_limited, message: 'Rate limit exceeded (burst 120, 2 req/s sustained)' }
+  examples:
+    ContactValue:
+      value:
+        id: 66f1a2b3c4d5e6f7a8b9c0c7
+        email: maya.fischer@example.test
+        name: Maya Fischer
+        phone: ''
+        company: ''
+        avatar: ''
+        tags: [customer]
+        data: { plan: pro, seats: 5 }
+        geo: { country: '', country_name: '', city: '', timezone: '', locale: '' }
+        device: { browser: '', browser_version: '', os: '', os_version: '', type: '' }
+        referrer: ''
+        utm: { source: '', medium: '', campaign: '', term: '', content: '' }
+        current_page: null
+        sessions: 0
+        page_views: 0
+        events: []
+        source: api
+        external_id: cus_8842
+        first_seen_at: '2026-10-14T12:00:00.000Z'
+        last_seen_at: '2026-10-14T12:00:00.000Z'
+        online: true
+        created_at: '2026-10-14T12:00:00.000Z'
+    ContactEnvelope:
+      value:
+        data:
+          id: 66f1a2b3c4d5e6f7a8b9c0c1
+          email: maya.fischer@example.test
+          name: Maya Fischer
+          phone: '+49 30 5550 1234'
+          company: Fischer Design
+          avatar: ''
+          tags: [vip, newsletter]
+          data: { plan: pro, seats: 5, trial: false }
+          geo: { country: DE, country_name: Germany, city: Berlin, timezone: Europe/Berlin, locale: de-DE }
+          device: { browser: Firefox, browser_version: '131.0', os: Linux, os_version: '', type: desktop }
+          referrer: 'https://news.example.test/'
+          utm: { source: newsletter, medium: email, campaign: october-launch, term: '', content: '' }
+          current_page: { url: 'https://shop.example.test/pricing', title: Pricing, since: '2026-10-14T09:10:02.000Z' }
+          sessions: 4
+          page_views: 23
+          events: [signed_up, upgraded]
+          source: widget
+          external_id: ''
+          first_seen_at: '2026-09-30T15:02:11.000Z'
+          last_seen_at: '2026-10-14T09:13:05.000Z'
+          online: true
+          created_at: '2026-09-30T15:02:11.000Z'
+    ConversationValue:
+      value:
+        id: 66f1a2b3c4d5e6f7a8b9c0d1
+        status: open
+        snoozed_until: null
+        assignee_id: 66e0aa11bb22cc33dd44ee55
+        tags: [billing]
+        subject: ''
+        channel: widget
+        last_message: { text: Can I switch to annual billing?, from: visitor, at: '2026-10-14T09:12:40.000Z' }
+        unread: 1
+        visitor_unread: 0
+        visitor_read_at: null
+        rating: null
+        first_response_at: null
+        resolved_at: null
+        created_at: '2026-10-14T09:12:40.000Z'
+        updated_at: '2026-10-14T09:12:40.000Z'
+        contact_id: 66f1a2b3c4d5e6f7a8b9c0c1
+    WebhookValue:
+      value:
+        id: 66f4d5e6f7a8b9c0d1e2f301
+        url: https://bridge.example.test/hearthly
+        events: [message.sent]
+        description: Telegram bridge
+        active: true
+        secret_hint: whsec_Q2x8…
+        created_via: 'api:Telegram bridge'
+        failures: 0
+        created_at: '2026-10-14T13:30:00.000Z'
+  schemas:
+    ObjectId:
+      type: string
+      pattern: '^[a-f0-9]{24}$'
+      examples: [66f1a2b3c4d5e6f7a8b9c0d1]
+    DateTime:
+      type: string
+      format: date-time
+    Scope:
+      type: string
+      enum: [conversations:read, conversations:write, messages:write, contacts:read, contacts:write, webhooks:manage, website:read]
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              enum: [unauthorized, insufficient_scope, not_found, bad_request, validation_failed, rate_limited, server_error]
+            message: { type: string }
+    OAuthError:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          enum: [invalid_client, invalid_grant, invalid_request, unsupported_grant_type, slow_down, server_error]
+        error_description: { type: string }
+    Pagination:
+      type: object
+      required: [page, limit, total, has_more]
+      properties:
+        page: { type: integer, minimum: 1 }
+        limit: { type: integer, minimum: 1, maximum: 100 }
+        total: { type: integer, minimum: 0 }
+        has_more: { type: boolean }
+    Contact:
+      type: object
+      required: [id, email, name, phone, company, avatar, tags, data, geo, device, referrer, utm, current_page, sessions, page_views, events, source, external_id, first_seen_at, last_seen_at, online, created_at]
+      properties:
+        id: { $ref: '#/components/schemas/ObjectId' }
+        email: { type: string, description: Lower-cased; empty string if unknown. }
+        name: { type: string }
+        phone: { type: string }
+        company: { type: string }
+        avatar: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+        data:
+          type: object
+          description: Custom attributes.
+          additionalProperties:
+            type: [string, number, boolean, 'null']
+        geo:
+          type: object
+          required: [country, country_name, city, timezone, locale]
+          properties:
+            country: { type: string, description: ISO country code. }
+            country_name: { type: string }
+            city: { type: string }
+            timezone: { type: string }
+            locale: { type: string }
+        device:
+          type: object
+          required: [browser, browser_version, os, os_version, type]
+          properties:
+            browser: { type: string }
+            browser_version: { type: string }
+            os: { type: string }
+            os_version: { type: string }
+            type: { type: string, description: 'desktop, mobile, tablet, bot, or empty.' }
+        referrer: { type: string }
+        utm:
+          type: object
+          required: [source, medium, campaign, term, content]
+          properties:
+            source: { type: string }
+            medium: { type: string }
+            campaign: { type: string }
+            term: { type: string }
+            content: { type: string }
+        current_page:
+          oneOf:
+            - type: object
+              required: [url, title, since]
+              properties:
+                url: { type: string }
+                title: { type: string }
+                since: { type: [string, 'null'], format: date-time }
+            - type: 'null'
+        sessions: { type: integer }
+        page_views: { type: integer }
+        events:
+          type: array
+          description: Names of tracked events performed.
+          items: { type: string }
+        source: { type: string, description: 'widget, api, manual, import, or channel:<name>.' }
+        external_id: { type: string, description: 'Your ID for the contact. Inbound-created contacts use `<channel>:<id>`.' }
+        first_seen_at: { type: [string, 'null'], format: date-time }
+        last_seen_at: { type: [string, 'null'], format: date-time }
+        online: { type: boolean, description: last_seen_at less than 75 seconds ago. }
+        created_at: { type: [string, 'null'], format: date-time }
+    ContactInput:
+      type: object
+      properties:
+        email: { type: string, format: email, maxLength: 200 }
+        name: { type: string, maxLength: 100 }
+        phone: { type: string, maxLength: 40 }
+        company: { type: string, maxLength: 100 }
+        tags:
+          type: array
+          maxItems: 30
+          items: { type: string, minLength: 1, maxLength: 40 }
+        data:
+          type: object
+          additionalProperties:
+            oneOf:
+              - { type: string, maxLength: 500 }
+              - { type: number }
+              - { type: boolean }
+              - { type: 'null' }
+        external_id: { type: string, maxLength: 100 }
+    Conversation:
+      type: object
+      required: [id, status, snoozed_until, assignee_id, tags, subject, channel, last_message, unread, visitor_unread, visitor_read_at, rating, first_response_at, resolved_at, created_at, updated_at, contact_id]
+      properties:
+        id: { $ref: '#/components/schemas/ObjectId' }
+        status: { type: string, enum: [open, pending, resolved] }
+        snoozed_until: { type: [string, 'null'], format: date-time }
+        assignee_id:
+          oneOf:
+            - $ref: '#/components/schemas/ObjectId'
+            - type: 'null'
+        tags:
+          type: array
+          items: { type: string }
+        subject: { type: string }
+        channel: { type: string, description: 'widget, campaign, or a custom inbound channel name.' }
+        last_message:
+          oneOf:
+            - type: object
+              required: [text, from, at]
+              properties:
+                text: { type: string, maxLength: 140 }
+                from: { type: string, enum: [visitor, operator, bot] }
+                at: { type: string, format: date-time }
+            - type: 'null'
+        unread: { type: integer, description: Visitor messages unread by the team. }
+        visitor_unread: { type: integer, description: Operator/bot messages unread by the visitor. }
+        visitor_read_at: { type: [string, 'null'], format: date-time }
+        rating:
+          oneOf:
+            - type: object
+              required: [score, comment, at]
+              properties:
+                score: { type: number }
+                comment: { type: string }
+                at: { type: [string, 'null'], format: date-time }
+            - type: 'null'
+        first_response_at: { type: [string, 'null'], format: date-time }
+        resolved_at: { type: [string, 'null'], format: date-time }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        contact_id: { $ref: '#/components/schemas/ObjectId' }
+        contact: { $ref: '#/components/schemas/Contact' }
+    VisitorConversation:
+      type: object
+      description: The slice of a conversation a visitor may see.
+      required: [id, status, unread, rating, created_at]
+      properties:
+        id: { $ref: '#/components/schemas/ObjectId' }
+        status: { type: string, enum: [open, pending, resolved] }
+        unread: { type: integer, description: Messages unread by the visitor. }
+        rating:
+          oneOf:
+            - type: object
+              properties:
+                score: { type: number }
+                comment: { type: string }
+                at: { type: [string, 'null'], format: date-time }
+            - type: 'null'
+        created_at: { type: string, format: date-time }
+    Message:
+      type: object
+      required: [id, conversation_id, from, author, text, attachments, actions, via, created_at]
+      properties:
+        id: { $ref: '#/components/schemas/ObjectId' }
+        conversation_id: { $ref: '#/components/schemas/ObjectId' }
+        from: { type: string, enum: [visitor, operator, bot, system, note] }
+        author:
+          oneOf:
+            - type: object
+              required: [id, name, avatar]
+              properties:
+                id: { type: [string, 'null'], description: 'User/contact ID, or `api_key:<id>` / `app:<id>` for API-sent messages.' }
+                name: { type: string }
+                avatar: { type: string }
+            - type: 'null'
+        text: { type: string }
+        attachments:
+          type: array
+          items:
+            type: object
+            required: [id, name, size, type]
+            properties:
+              id: { type: string }
+              name: { type: string }
+              size: { type: number, description: Bytes. }
+              type: { type: string, description: MIME type. }
+        actions:
+          type: array
+          description: Quick-reply buttons offered with bot messages.
+          items:
+            type: object
+            required: [label]
+            properties:
+              label: { type: string }
+        via: { type: string, description: 'API key / app name, or `<channel> (<key name>)` for inbound messages.' }
+        created_at: { type: string, format: date-time }
+    Website:
+      type: object
+      required: [id, internal_id, name, domain, members, online, within_hours, created_at]
+      properties:
+        id: { type: string, description: Public website ID (used in the widget snippet). }
+        internal_id: { $ref: '#/components/schemas/ObjectId' }
+        name: { type: string }
+        domain: { type: string }
+        members: { type: integer, description: Number of team members. }
+        online: { type: boolean, description: Within hours and at least one agent connected. }
+        within_hours: { type: boolean }
+        created_at: { type: string, format: date-time }
+    WebhookEvent:
+      type: string
+      enum: [message.received, message.sent, conversation.created, conversation.resolved, contact.created, contact.updated, visitor.identified, rating.submitted, campaign.sent]
+    Webhook:
+      type: object
+      required: [id, url, events, description, active, secret_hint, created_via, failures, created_at]
+      properties:
+        id: { $ref: '#/components/schemas/ObjectId' }
+        url: { type: string, format: uri }
+        events:
+          type: array
+          items: { $ref: '#/components/schemas/WebhookEvent' }
+        description: { type: string }
+        active: { type: boolean }
+        secret_hint: { type: string, description: First characters of the signing secret. }
+        created_via: { type: string, description: '`dashboard`, `api:<key name>` or `app:<app name>`.' }
+        failures: { type: integer, description: Consecutive failed deliveries. }
+        created_at: { type: string, format: date-time }
+    TokenRequest:
+      type: object
+      required: [grant_type]
+      properties:
+        grant_type: { type: string, enum: [authorization_code, refresh_token] }
+        code: { type: string, description: 'authorization_code grant: the `hly_code_…` code.' }
+        redirect_uri: { type: string, description: 'authorization_code grant: required, must match.' }
+        code_verifier: { type: string, pattern: '^[A-Za-z0-9._~-]{43,128}$', description: PKCE verifier. }
+        refresh_token: { type: string, description: 'refresh_token grant: the `hly_rt_…` token.' }
+        client_id: { type: string, description: Required unless sent via HTTP Basic. }
+        client_secret: { type: string }
+    TokenResponse:
+      type: object
+      required: [access_token, token_type, expires_in, refresh_token, scope, website_id]
+      properties:
+        access_token: { type: string, description: '`hly_at_…`' }
+        token_type: { type: string, const: Bearer }
+        expires_in: { type: integer, const: 3600 }
+        refresh_token: { type: string, description: '`hly_rt_…`, valid 90 days, rotated on use.' }
+        scope: { type: string, description: Space-separated granted scopes. }
+        website_id: { $ref: '#/components/schemas/ObjectId' }
+    RevokeRequest:
+      type: object
+      required: [token]
+      properties:
+        token: { type: string, description: Access or refresh token. }
+        token_type_hint: { type: string, description: Accepted and ignored. }
+        client_id: { type: string }
+        client_secret: { type: string }

@@ -1,10 +1,10 @@
-// Verifies ChatCrip webhook signatures (zero dependencies).
-//   CHATCRIP_WEBHOOK_SECRET=whsec_... node server.mjs   → listens on :4100/webhook
+// Verifies Hearthly webhook signatures (zero dependencies).
+//   HEARTHLY_WEBHOOK_SECRET=whsec_... node server.mjs   → listens on :4100/webhook
 import http from "node:http";
 import crypto from "node:crypto";
 
-const SECRET = process.env.CHATCRIP_WEBHOOK_SECRET;
-if (!SECRET) throw new Error("Set CHATCRIP_WEBHOOK_SECRET");
+const SECRET = process.env.HEARTHLY_WEBHOOK_SECRET;
+if (!SECRET) throw new Error("Set HEARTHLY_WEBHOOK_SECRET");
 
 export function verify(secret, rawBody, header, toleranceSec = 300) {
   const parts = Object.fromEntries(String(header || "").split(",").map((p) => p.split("=")));
@@ -20,7 +20,7 @@ http
     let raw = "";
     req.on("data", (c) => (raw += c));
     req.on("end", () => {
-      if (!verify(SECRET, raw, req.headers["x-chatcrip-signature"])) {
+      if (!verify(SECRET, raw, req.headers["hearthly-signature"])) {
         res.writeHead(400).end("bad signature");
         return;
       }

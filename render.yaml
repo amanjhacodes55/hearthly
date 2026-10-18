@@ -2,7 +2,7 @@
 # The only value you must provide is MONGODB_URI (e.g. a free MongoDB Atlas M0 connection string).
 services:
   - type: web
-    name: chatcrip
+    name: hearthly
     runtime: docker
     plan: free
     dockerfilePath: ./Dockerfile

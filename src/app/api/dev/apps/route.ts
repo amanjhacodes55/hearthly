@@ -13,7 +13,7 @@ export const GET = route(async (_req, ctx) => {
 export const POST = route(async (req, ctx) => {
   const b = await body(req, appInput);
   if ((await OAuthApp.countDocuments({ owner: ctx.user.id })) >= 20) return err("Limit of 20 apps per developer");
-  const clientSecret = `cc_cs_${rand(32)}`;
-  const app = await OAuthApp.create({ ...b, owner: ctx.user.id, clientId: `cc_app_${shortId(16)}`, clientSecretHash: sha256(clientSecret) });
+  const clientSecret = `hly_cs_${rand(32)}`;
+  const app = await OAuthApp.create({ ...b, owner: ctx.user.id, clientId: `hly_app_${shortId(16)}`, clientSecretHash: sha256(clientSecret) });
   return json({ id: String(app._id), clientId: app.clientId, clientSecret }, 201);
 }, { noWebsite: true });

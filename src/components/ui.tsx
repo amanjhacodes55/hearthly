@@ -3,28 +3,39 @@ import { useEffect, useId, useRef } from "react";
 import clsx from "clsx";
 import { X } from "lucide-react";
 
+const BUBBLE = "M32 6.5C47.2 6.5 58.5 16.4 58.5 29S47.2 51.5 32 51.5c-3.1 0-6.1-.4-8.8-1.2l-9 6.6c-1.7 1.2-3.9-.3-3.4-2.3l2.1-8.3C8.3 42.2 5.5 36 5.5 29 5.5 16.4 16.8 6.5 32 6.5z";
+const FLAME = "M32 14.5c1.2 5 5.6 7.9 8.2 12.1 1.4 2.3 2.1 4.7 2.1 7 0 5.8-4.6 10-10.3 10s-10.3-4.2-10.3-10c0-3.2 1.4-6 3.5-8.2.2 2.5 1.4 4.3 3.2 5.2-.8-5.2.6-11.4 3.6-16.1z";
+const CORE = "M32 29.5c2.2 2.5 4.4 4.1 4.4 6.9 0 2.6-2 4.4-4.4 4.4s-4.4-1.8-4.4-4.4c0-2.5 2-4.4 4.4-6.9z";
+
+/** The Hearthly mark: a warm speech bubble whose negative space is a hearth flame. */
 export function LogoMark({ size = 32, className }: { size?: number; className?: string }) {
   return (
     <svg viewBox="0 0 64 64" width={size} height={size} className={className} aria-hidden="true">
       <defs>
-        <linearGradient id="ccg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#14b8a6" />
-          <stop offset="1" stopColor="#0b7a70" />
+        <linearGradient id="hly-b" x1="10" y1="6" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#FF6B3D" />
+          <stop offset=".55" stopColor="#FF8A3D" />
+          <stop offset="1" stopColor="#FFB547" />
+        </linearGradient>
+        <linearGradient id="hly-c" x1="32" y1="29" x2="32" y2="41" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#FFB547" />
+          <stop offset="1" stopColor="#FF6B3D" />
         </linearGradient>
       </defs>
-      <path d="M14 6h36a10 10 0 0 1 10 10v22a10 10 0 0 1-10 10H30l-11 9.5c-1.6 1.4-4 .2-4-1.9V48h-1A10 10 0 0 1 4 38V16A10 10 0 0 1 14 6z" fill="url(#ccg)" />
-      <path d="M38.5 19.5a11 11 0 1 0 0 15" fill="none" stroke="#fff" strokeWidth="5.5" strokeLinecap="round" />
-      <circle cx="45" cy="27" r="4.2" fill="#f97362" />
+      <path d={BUBBLE} fill="url(#hly-b)" />
+      <path d={FLAME} fill="#FFF6EA" />
+      <path d={CORE} fill="url(#hly-c)" />
     </svg>
   );
+}
+export function Wordmark({ className }: { className?: string }) {
+  return <span className={clsx("h-display font-semibold tracking-tight", className)}>Hearthly</span>;
 }
 export function Logo({ className, size = 30 }: { className?: string; size?: number }) {
   return (
     <span className={clsx("inline-flex items-center gap-2", className)}>
       <LogoMark size={size} />
-      <span className="h-display text-[1.2em] font-extrabold tracking-tight">
-        Chat<span className="text-brand">Crip</span>
-      </span>
+      <Wordmark className="text-[1.35em]" />
     </span>
   );
 }

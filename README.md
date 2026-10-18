@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="public/logo.svg" width="72" alt="ChatCrip logo" />
+  <img src="public/logo.svg" width="72" alt="Hearthly logo" />
 </p>
 
-<h1 align="center">ChatCrip</h1>
+<h1 align="center">Hearthly</h1>
 
 <p align="center"><b>Open-source customer messaging: a beautiful chat widget, a realtime shared inbox, visitor CRM, automations, a help center — and a developer platform that lets you talk to customers from anywhere.</b></p>
 
@@ -12,14 +12,14 @@
 
 **Live demo:** _coming soon_
 
-![ChatCrip inbox](docs/screenshots/inbox.png)
+![Hearthly inbox](docs/screenshots/inbox.png)
 
 ---
 
-## Why ChatCrip?
+## Why Hearthly?
 
 Most chat tools put the useful parts — visitor tracking, triggers, webhooks, an API — behind per-seat plans.
-ChatCrip ships all of it in one MIT-licensed app you can deploy for free (Render + MongoDB Atlas free tiers)
+Hearthly ships all of it in one MIT-licensed app you can deploy for free (Render + MongoDB Atlas free tiers)
 in about five minutes. It is inspired by tools like Crisp, Intercom and Chatwoot, with its own design and a
 focus on two things: **an inbox that is a joy to use**, and **a first-class developer platform**.
 
@@ -87,7 +87,7 @@ flowchart LR
   subgraph Browser
     D["Dashboard<br/>(Next.js / React)"]
   end
-  subgraph ChatCrip ["ChatCrip (single Node process)"]
+  subgraph Hearthly ["Hearthly (single Node process)"]
     WA["/api/widget/*<br/>token auth, CORS *"]
     DA["/api/*<br/>NextAuth session"]
     V1["/api/v1/*<br/>API key / OAuth token"]
@@ -132,9 +132,9 @@ lucide icons · Vitest · esbuild (widget bundle). No chart, state or UI-kit lib
 Requirements: Node 20+, MongoDB 6+ running locally (or an Atlas URI).
 
 ```bash
-git clone <your-fork-url> chatcrip && cd chatcrip
+git clone <your-fork-url> hearthly && cd hearthly
 npm install
-cp .env.example .env.local        # set NEXTAUTH_SECRET; MONGODB_URI defaults to mongodb://127.0.0.1:27017/chatcrip_dev
+cp .env.example .env.local        # set NEXTAUTH_SECRET; MONGODB_URI defaults to mongodb://127.0.0.1:27017/hearthly_dev
 npm run dev                       # http://localhost:3005
 ```
 
@@ -153,7 +153,7 @@ npm run build       # bundles widget.js with esbuild, then next build
 
 | Variable | Required | Description |
 |---|---|---|
-| `MONGODB_URI` | **yes** | MongoDB connection string **including the database name**, e.g. `mongodb+srv://user:pass@cluster.mongodb.net/chatcrip` |
+| `MONGODB_URI` | **yes** | MongoDB connection string **including the database name**, e.g. `mongodb+srv://user:pass@cluster.mongodb.net/hearthly` |
 | `NEXTAUTH_SECRET` | yes (prod) | Session encryption secret (`openssl rand -base64 32`). Render generates it. |
 | `NEXTAUTH_URL` | recommended | Public URL. The Docker image falls back to Render's `RENDER_EXTERNAL_URL`. |
 | `WIDGET_TOKEN_SECRET` | optional | HMAC key for visitor tokens (defaults to a key derived from `NEXTAUTH_SECRET`). |
@@ -162,7 +162,7 @@ npm run build       # bundles widget.js with esbuild, then next build
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | optional | Enables "Continue with Google". |
 | `ALLOW_PRIVATE_URLS` | dev only | `true` lets webhooks target localhost/private IPs. **Never enable in production.** |
 | `DEMO_WEBSITE_ID` | optional | Public id of the `/demo` workspace (default `demo`). |
-| `CHATCRIP_DISABLE_SCHEDULER` | optional | `1` disables the in-app job loop. |
+| `HEARTHLY_DISABLE_SCHEDULER` | optional | `1` disables the in-app job loop. |
 
 > Rotating `NEXTAUTH_SECRET` / `WIDGET_TOKEN_SECRET` signs everyone out and resets visitor identities;
 > rotating `WEBHOOK_SIGNING_SECRET` makes stored webhook secrets unreadable (re-create or rotate them).
@@ -175,29 +175,29 @@ npm run build       # bundles widget.js with esbuild, then next build
 2. **Database Access → Add New Database User** — username + generated password (role: *Read and write to any database*).
 3. **Network Access → Add IP Address → `0.0.0.0/0`** (Render's free tier has no static outbound IPs).
 4. **Connect → Drivers** — copy the URI and add the database name before the `?`:
-   `mongodb+srv://USER:PASSWORD@cluster0.xxxxx.mongodb.net/chatcrip?retryWrites=true&w=majority`
+   `mongodb+srv://USER:PASSWORD@cluster0.xxxxx.mongodb.net/hearthly?retryWrites=true&w=majority`
    (URL-encode special characters in the password.)
 
 **2. Render**
 
 1. Push this repo to your GitHub.
 2. Render dashboard → **New → Blueprint** → pick the repo. `render.yaml` defines one free Docker web service
-   `chatcrip` with health check `/api/health` and auto-generated `NEXTAUTH_SECRET`, `WIDGET_TOKEN_SECRET`
+   `hearthly` with health check `/api/health` and auto-generated `NEXTAUTH_SECRET`, `WIDGET_TOKEN_SECRET`
    and `WEBHOOK_SIGNING_SECRET`.
 3. Paste your **`MONGODB_URI`** when prompted (SMTP / Google are optional) → **Apply**.
 4. When the deploy is live, open the URL, register, and paste the widget snippet into your site.
 
 `/api/health` is a **liveness** probe: it always returns `200` and reports `{"db":"up"|"down"}` in the body, so a
 database hiccup never blocks a deploy (use `/api/health?strict=1` for a readiness check that returns `503`).
-The free tier sleeps after inactivity; the first request wakes it in ~30 s. ChatCrip assumes a **single instance**
+The free tier sleeps after inactivity; the first request wakes it in ~30 s. Hearthly assumes a **single instance**
 (in-memory event bus and rate limits).
 
 **Docker anywhere**
 
 ```bash
-docker build -t chatcrip .
-docker run -p 10000:10000 -e MONGODB_URI="mongodb+srv://…/chatcrip" -e NEXTAUTH_SECRET="$(openssl rand -base64 32)" \
-  -e NEXTAUTH_URL="https://chat.example.com" chatcrip
+docker build -t hearthly .
+docker run -p 10000:10000 -e MONGODB_URI="mongodb+srv://…/hearthly" -e NEXTAUTH_SECRET="$(openssl rand -base64 32)" \
+  -e NEXTAUTH_URL="https://chat.example.com" hearthly
 ```
 
 ## Embedding the widget
@@ -209,20 +209,20 @@ docker run -p 10000:10000 -e MONGODB_URI="mongodb+srv://…/chatcrip" -e NEXTAUT
 ```html
 <script>
   // Queue commands before the widget loads…
-  window.ChatCrip = window.ChatCrip || [];
-  ChatCrip.push(["set", "user:email", "ada@example.com"]);
-  ChatCrip.push(["set", "user:nickname", "Ada Lovelace"]);
-  ChatCrip.push(["set", "session:data", [["plan", "pro"], ["seats", 12]]]);
-  ChatCrip.push(["on", "message:received", (m) => console.log("reply", m.text)]);
+  window.Hearthly = window.Hearthly || [];
+  Hearthly.push(["set", "user:email", "ada@example.com"]);
+  Hearthly.push(["set", "user:nickname", "Ada Lovelace"]);
+  Hearthly.push(["set", "session:data", [["plan", "pro"], ["seats", 12]]]);
+  Hearthly.push(["on", "message:received", (m) => console.log("reply", m.text)]);
 </script>
 ```
 
-After load: `ChatCrip.open()`, `.close()`, `.toggle()`, `.show()`, `.hide()`,
+After load: `Hearthly.open()`, `.close()`, `.toggle()`, `.show()`, `.hide()`,
 `.identify({ email, name, phone, company, avatar, data, user_hash })`, `.track("checkout", { total: 49 })`,
 `.send("Hi")`, `.on(event, fn)` / `.off(event, fn)` (`ready`, `open`, `close`, `message:sent`, `message:received`,
 `rating:submitted`), `.reset()`.
 
-**Identity verification:** widget identities are unverified, so ChatCrip never merges a visitor into an existing
+**Identity verification:** widget identities are unverified, so Hearthly never merges a visitor into an existing
 contact just because they typed an email. Pass `user_hash = HMAC-SHA256(identitySecret, lowercase(email))`
 (computed server-side; secret in **Settings → Website & install**) to mark an identity as verified and merge history.
 
@@ -232,13 +232,13 @@ Create a key in **Settings → API keys** (scopes: `conversations:read`, `conver
 `contacts:read`, `contacts:write`, `webhooks:manage`, `website:read`). Keys are shown once and stored as SHA-256 hashes.
 
 ```bash
-curl https://YOUR-HOST/api/v1/conversations?status=open -H "Authorization: Bearer cc_key_…"
+curl https://YOUR-HOST/api/v1/conversations?status=open -H "Authorization: Bearer hly_key_…"
 
 curl -X POST https://YOUR-HOST/api/v1/conversations/$ID/messages \
-  -H "Authorization: Bearer cc_key_…" -H "Content-Type: application/json" \
+  -H "Authorization: Bearer hly_key_…" -H "Content-Type: application/json" \
   -d '{"text":"Your order shipped 📦","from":"operator","author_name":"Ops bot"}'
 
-curl -X POST https://YOUR-HOST/api/v1/contacts -H "Authorization: Bearer cc_key_…" -H "Content-Type: application/json" \
+curl -X POST https://YOUR-HOST/api/v1/contacts -H "Authorization: Bearer hly_key_…" -H "Content-Type: application/json" \
   -d '{"email":"ada@example.com","tags":["vip"],"data":{"plan":"pro"}}'   # upserts / merges on email
 ```
 
@@ -263,8 +263,8 @@ Full reference with payload samples: **`/developers/docs`** in your deployment.
 Events: `message.received`, `message.sent`, `conversation.created`, `conversation.resolved`, `contact.created`,
 `contact.updated`, `visitor.identified`, `rating.submitted`, `campaign.sent` (plus `ping` from the *Send test* button).
 
-Each delivery is a JSON `POST` with `X-ChatCrip-Event`, `X-ChatCrip-Delivery`, `X-ChatCrip-Timestamp` and
-`X-ChatCrip-Signature: t=<unix>,v1=<hex HMAC-SHA256(secret, "<t>.<raw body>")>`. Non-2xx responses are retried with
+Each delivery is a JSON `POST` with `Hearthly-Event`, `Hearthly-Delivery`, `Hearthly-Timestamp` and
+`Hearthly-Signature: t=<unix>,v1=<hex HMAC-SHA256(secret, "<t>.<raw body>")>`. Non-2xx responses are retried with
 exponential backoff (30 s, 2 m, 8 m, 32 m, ~2 h, ~8.5 h); every attempt's headers, status, latency and response are
 logged in the dashboard with one-click **redeliver**. The body's `id` is stable across retries — use it to dedupe.
 Webhook URLs resolving to private / loopback / link-local addresses are rejected (SSRF protection).
@@ -300,12 +300,12 @@ def verify(secret: str, raw_body: bytes, header: str) -> bool:
    They pick a website on the consent screen.
 3. **Exchange** the single-use code (10 min) at `POST /api/oauth/token` with `grant_type=authorization_code`,
    `code`, `redirect_uri`, `client_id` and either `client_secret` or the PKCE `code_verifier` (public clients must use PKCE).
-4. **Call the API** with `Authorization: Bearer cc_at_…` (1 h). Refresh with `grant_type=refresh_token` — refresh
+4. **Call the API** with `Authorization: Bearer hly_at_…` (1 h). Refresh with `grant_type=refresh_token` — refresh
    tokens rotate. Revoke with `POST /api/oauth/revoke`.
 5. Admins see the app under **Settings → Installed apps**; uninstalling revokes its tokens and deletes webhooks it created.
 
 Combined with the **inbound API** (`POST /api/v1/inbound`) and the `message.sent` webhook, an app can bridge any
-messaging platform into ChatCrip. Runnable, dependency-free examples live in [`examples/`](examples):
+messaging platform into Hearthly. Runnable, dependency-free examples live in [`examples/`](examples):
 [`oauth-node`](examples/oauth-node) (full PKCE flow + posting a message), [`webhook-receiver`](examples/webhook-receiver)
 (Node + Python signature verification) and [`inbound-bridge`](examples/inbound-bridge) (chat in from your terminal).
 

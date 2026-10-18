@@ -13,7 +13,7 @@ import { clientIp, handleError } from "@/lib/api";
 export const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, X-ChatCrip-Token",
+  "Access-Control-Allow-Headers": "Content-Type, Hearthly-Token",
   "Access-Control-Max-Age": "86400",
 };
 export const wjson = (d: unknown, status = 200) => NextResponse.json(d, { status, headers: { ...CORS, "Cache-Control": "no-store" } });
@@ -29,13 +29,13 @@ export function rateLimited(req: Request, bucket: string, capacity = 60, perSec 
 
 export type VisitorCtx = { site: Site; contact: any; token: string };
 
-/** Authenticate a visitor by their signed token (header X-ChatCrip-Token, or ?token= for EventSource/img). */
+/** Authenticate a visitor by their signed token (header Hearthly-Token, or ?token= for EventSource/img). */
 export function visitorRoute(h: (req: Request, v: VisitorCtx) => Promise<Response>, o: { bucket: string; capacity?: number; perSec?: number }) {
   return async (req: Request) => {
     const limited = rateLimited(req, o.bucket, o.capacity, o.perSec);
     if (limited) return limited;
     try {
-      const token = req.headers.get("x-chatcrip-token") || new URL(req.url).searchParams.get("token") || "";
+      const token = req.headers.get("hearthly-token") || new URL(req.url).searchParams.get("token") || "";
       const t = verifyVisitorToken(tokenKey(), token);
       if (!t) return werr("Invalid visitor token", 401);
       await dbConnect();

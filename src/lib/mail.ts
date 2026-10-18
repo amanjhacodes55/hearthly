@@ -11,7 +11,7 @@ export async function sendMail(m: { to: string; subject: string; text: string; h
     return { logged: true as const };
   }
   transport ??= nodemailer.createTransport(process.env.SMTP_URL);
-  await transport.sendMail({ from: process.env.SMTP_FROM || "ChatCrip <no-reply@chatcrip.local>", ...m });
+  await transport.sendMail({ from: process.env.SMTP_FROM || "Hearthly <no-reply@hearthly.local>", ...m });
   return { sent: true as const };
 }
 

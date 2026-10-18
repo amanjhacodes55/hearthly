@@ -40,7 +40,7 @@ export const POST = route(async (req, ctx) => {
     inst.scopes = [...new Set([...inst.scopes, ...scopes])];
     await inst.save();
   } else inst = await Installation.create({ app: app._id, website: site._id, installedBy: ctx.user.id, scopes });
-  const code = `cc_code_${rand(24)}`;
+  const code = `hly_code_${rand(24)}`;
   await OAuthCode.create({
     codeHash: sha256(code),
     app: app._id,

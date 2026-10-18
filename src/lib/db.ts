@@ -1,10 +1,10 @@
 import mongoose from "mongoose";
 
-const uri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/chatcrip_dev";
+const uri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/hearthly_dev";
 
 type Cache = { conn: typeof mongoose | null; promise: Promise<typeof mongoose> | null };
-const g = globalThis as unknown as { _chatcripMongo?: Cache };
-const cache: Cache = g._chatcripMongo ?? (g._chatcripMongo = { conn: null, promise: null });
+const g = globalThis as unknown as { _hearthlyMongo?: Cache };
+const cache: Cache = g._hearthlyMongo ?? (g._hearthlyMongo = { conn: null, promise: null });
 
 /** One shared connection per process. A failed attempt is NOT cached, so the next request retries. */
 export async function dbConnect(): Promise<typeof mongoose> {

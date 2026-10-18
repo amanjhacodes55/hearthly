@@ -64,7 +64,7 @@ export default function DevApps() {
             {!data ? (
               <Skeleton className="m-4 h-20" />
             ) : !data.length ? (
-              <Empty icon={<Code2 className="size-6" />} title="No apps yet">Register an app to let any ChatCrip workspace install your integration via OAuth 2.0 (authorization code + PKCE).</Empty>
+              <Empty icon={<Code2 className="size-6" />} title="No apps yet">Register an app to let any Hearthly workspace install your integration via OAuth 2.0 (authorization code + PKCE).</Empty>
             ) : (
               <ul className="divide-y divide-border">
                 {data.map((a) => (

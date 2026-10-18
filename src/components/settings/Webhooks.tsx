@@ -23,7 +23,7 @@ export default function Webhooks() {
     <>
       <Card
         title="Webhooks"
-        description={<>Get an HTTPS POST for every event, signed with HMAC-SHA256 (<code className="kbd">X-ChatCrip-Signature</code>). Failed deliveries retry with exponential backoff for ~12 hours. <Link className="text-brand hover:underline" href="/developers/docs#webhooks">Verification guide →</Link></>}
+        description={<>Get an HTTPS POST for every event, signed with HMAC-SHA256 (<code className="kbd">Hearthly-Signature</code>). Failed deliveries retry with exponential backoff for ~12 hours. <Link className="text-brand hover:underline" href="/developers/docs#webhooks">Verification guide →</Link></>}
         footer={
           <button className="btn-primary" onClick={() => (setForm({ url: "", description: "", events: ["message.received", "conversation.created"] }), setSecret(null))}>
             <Plus className="size-4" /> Add endpoint
@@ -75,7 +75,7 @@ export default function Webhooks() {
           form && (
             <div className="space-y-4">
               <Field label="Endpoint URL" hint="Public http(s) URL. Private/internal addresses are blocked (SSRF protection).">
-                <input className="input font-mono" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} placeholder="https://example.com/chatcrip/webhook" />
+                <input className="input font-mono" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} placeholder="https://example.com/hearthly/webhook" />
               </Field>
               <Field label="Description">
                 <input className="input" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />

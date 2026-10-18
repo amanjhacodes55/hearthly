@@ -9,8 +9,8 @@ import { HttpError, zodMessage } from "@/lib/api";
 import type { Scope } from "@/lib/oauth";
 
 /**
- * REST API v1 auth: `Authorization: Bearer <token>` where token is a workspace API key (cc_key_…)
- * or an OAuth access token (cc_at_…). Errors are always `{ "error": { "code", "message" } }`.
+ * REST API v1 auth: `Authorization: Bearer <token>` where token is a workspace API key (hly_key_…)
+ * or an OAuth access token (hly_at_…). Errors are always `{ "error": { "code", "message" } }`.
  */
 export type V1Ctx = { websiteId: string; scopes: string[]; actor: { type: "api_key" | "app"; id: string; name: string } };
 
@@ -40,11 +40,11 @@ export function paginate(url: URL) {
 }
 
 async function authenticate(raw: string): Promise<V1Ctx | null> {
-  if (raw.startsWith("cc_key_")) {
+  if (raw.startsWith("hly_key_")) {
     const k = await ApiKey.findOneAndUpdate({ hash: sha256(raw) }, { lastUsedAt: new Date() }).lean();
     return k ? { websiteId: String(k.website), scopes: k.scopes, actor: { type: "api_key", id: String(k._id), name: k.name || "API key" } } : null;
   }
-  if (raw.startsWith("cc_at_")) {
+  if (raw.startsWith("hly_at_")) {
     const t = await OAuthToken.findOne({ accessHash: sha256(raw), revokedAt: null }).lean();
     if (!t || (t.expiresAt && t.expiresAt < new Date())) return null;
     const inst = await Installation.findOneAndUpdate({ _id: t.installation, revokedAt: null }, { lastUsedAt: new Date() }).lean();

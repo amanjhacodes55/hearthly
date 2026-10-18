@@ -1,7 +1,7 @@
 /** In-memory token bucket (single instance deployment). capacity tokens, refilled at refillPerSec. */
 type Bucket = { tokens: number; at: number };
-const g = globalThis as unknown as { _ccBuckets?: Map<string, Bucket> };
-const buckets = (g._ccBuckets ??= new Map());
+const g = globalThis as unknown as { _hlyBuckets?: Map<string, Bucket> };
+const buckets = (g._hlyBuckets ??= new Map());
 
 export function takeToken(key: string, capacity: number, refillPerSec: number, now = Date.now()) {
   const b = buckets.get(key) ?? { tokens: capacity, at: now };

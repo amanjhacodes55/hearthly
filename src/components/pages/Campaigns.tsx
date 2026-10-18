@@ -166,7 +166,7 @@ export default function Campaigns() {
             <div>
               <p className="label">Preview</p>
               <div className="rounded-2xl border border-border bg-surface-2 p-3">
-                <div className="rounded-xl bg-gradient-to-br from-teal-500 to-teal-700 px-3 py-2 text-xs font-semibold text-white">Chat with us</div>
+                <div className="rounded-xl bg-gradient-to-br from-ember-500 to-ember-700 px-3 py-2 text-xs font-semibold text-white">Chat with us</div>
                 <p className="mt-3 whitespace-pre-wrap rounded-2xl rounded-bl-md bg-surface px-3 py-2 text-sm">{edit.body.replace(/\{\{\s*first_name\s*\|\s*([^}]*)\}\}/g, "Maya").replace(/\{\{\s*\w+\s*(\|[^}]*)?\}\}/g, "…")}</p>
               </div>
             </div>

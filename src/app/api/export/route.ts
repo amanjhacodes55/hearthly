@@ -30,5 +30,5 @@ export const GET = route(async (_req, ctx) => {
     triggers: trigs.map(strip),
     campaigns: camps.map(strip),
   };
-  return new Response(JSON.stringify(out, null, 2), { headers: { "Content-Type": "application/json", "Content-Disposition": `attachment; filename="chatcrip-export-${new Date().toISOString().slice(0, 10)}.json"` } });
+  return new Response(JSON.stringify(out, null, 2), { headers: { "Content-Type": "application/json", "Content-Disposition": `attachment; filename="hearthly-export-${new Date().toISOString().slice(0, 10)}.json"` } });
 }, { role: "admin" });

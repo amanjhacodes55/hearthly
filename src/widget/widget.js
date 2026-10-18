@@ -1,19 +1,19 @@
-/*! ChatCrip widget — MIT. Embed:
+/*! Hearthly widget — AGPL-3.0-or-later. Copyright © 2026 Aman Jha. Embed:
  *  <script src="https://HOST/widget.js" data-website="WEBSITE_ID" async></script>
- * JS API: ChatCrip.open() .close() .toggle() .identify({email,name,phone,data,user_hash}) .track(name, props)
+ * JS API: Hearthly.open() .close() .toggle() .identify({email,name,phone,data,user_hash}) .track(name, props)
  *         .on(event, fn) .off(event, fn) .send(text) .push(["set","user:email","x"]) .reset()
  */
 (function () {
   "use strict";
   var doc = document;
   var script = doc.currentScript || doc.querySelector("script[data-website]");
-  if (!script || window.__chatcripLoaded) return;
-  window.__chatcripLoaded = true;
+  if (!script || window.__hearthlyLoaded) return;
+  window.__hearthlyLoaded = true;
   var WID = script.getAttribute("data-website");
   var PREVIEW = script.getAttribute("data-preview") === "1";
   var ORIGIN = new URL(script.src, location.href).origin;
-  var KEY = "chatcrip:" + WID;
-  var queued = Array.isArray(window.ChatCrip) ? window.ChatCrip : [];
+  var KEY = "hearthly:" + WID;
+  var queued = Array.isArray(window.Hearthly) ? window.Hearthly : [];
 
   // ---------------------------------------------------------------- state
   var S = {
@@ -27,7 +27,7 @@
     rateTitle: "How was this conversation?", rateThanks: "Thanks for your feedback!", ratePlaceholder: "Tell us more (optional)",
     transcript: "Email me this transcript", transcriptSent: "Transcript on its way ✉️", emailPlaceholder: "you@company.com",
     prechatTitle: "Before we start", start: "Start chat", seen: "Seen", typing: "is typing", attach: "Attach a file",
-    emoji: "Emoji", dropHere: "Drop files to attach", poweredBy: "Chat by ChatCrip", leaveEmail: "Get notified by email", save: "Save",
+    emoji: "Emoji", dropHere: "Drop files to attach", poweredBy: "Chat by Hearthly", leaveEmail: "Get notified by email", save: "Save",
     you: "You", close: "Close", tooBig: "Files must be under 10 MB", uploadFailed: "Upload failed",
   };
   var t = function (k) { return (S.cfg && S.cfg.widget.strings && S.cfg.widget.strings[k]) || STR[k]; };
@@ -39,7 +39,7 @@
   }
   function api(path, body, method) {
     var h = { "Content-Type": "application/json" };
-    if (S.token) h["X-ChatCrip-Token"] = S.token;
+    if (S.token) h["Hearthly-Token"] = S.token;
     return fetch(ORIGIN + "/api/widget/" + path, { method: method || (body ? "POST" : "GET"), headers: h, body: body ? JSON.stringify(body) : undefined })
       .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || r.status); return j; }); });
   }
@@ -54,6 +54,7 @@
     return e;
   }
   var ICON = {
+    hearth: "M12 3.5c5 0 8.5 3.3 8.5 7.6s-3.5 7.6-8.5 7.6c-1 0-2-.1-2.9-.4L5 20.5l.9-3.6c-1.5-1.3-2.4-3.4-2.4-5.8 0-4.3 3.5-7.6 8.5-7.6zM12 7.3c.4 1.8 2.7 2.8 2.7 5.1a2.7 2.7 0 0 1-5.4 0c0-1 .5-1.9 1.1-2.5.1.8.5 1.3 1 1.6-.3-1.6.1-3.1.6-4.2z",
     bubble: "M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.2 3.6c-.5.4-1.3.1-1.3-.6V16A2.5 2.5 0 0 1 4 13.5z",
     wave: "M7 11.5V6a1.5 1.5 0 0 1 3 0v4m0-1.5V4.5a1.5 1.5 0 0 1 3 0v5m0-3a1.5 1.5 0 0 1 3 0v5m0-2.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1.2a6 6 0 0 1-4.6-2.2L4.5 15.5a1.6 1.6 0 0 1 2.4-2.1L8 14.5",
     spark: "M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z",
@@ -97,7 +98,7 @@
   // ---------------------------------------------------------------- styles
   function css(w) {
     var dark = w.theme === "dark" || (w.theme === "auto" && window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches);
-    var bg = dark ? "#11161d" : "#ffffff", fg = dark ? "#e7edf3" : "#14202b", mut = dark ? "#8b98a6" : "#5d6b78", sub = dark ? "#1a222c" : "#f3f6f8", bd = dark ? "#26313d" : "#e3e8ec";
+    var bg = dark ? "#1f1529" : "#ffffff", fg = dark ? "#f7ede5" : "#2b1b3d", mut = dark ? "#b3a2bd" : "#67566f", sub = dark ? "#2a1e37" : "#f8f2ec", bd = dark ? "#3b2c4b" : "#ece2d8";
     var grad = w.gradient ? "linear-gradient(135deg," + w.color + "," + w.accent + ")" : w.color, r = w.radius + "px", side = w.position === "left" ? "left" : "right";
     return ":host{all:initial}*{box-sizing:border-box;font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}" +
       ".cc{--c:" + w.color + ";--g:" + grad + ";--bg:" + bg + ";--fg:" + fg + ";--mut:" + mut + ";--sub:" + sub + ";--bd:" + bd + ";--r:" + r + ";position:fixed;" + side + ":20px;bottom:20px;z-index:2147483000;color:var(--fg);font-size:14px;line-height:1.45}" +
@@ -139,7 +140,7 @@
   // ---------------------------------------------------------------- DOM
   var host, root, wrap;
   function mount() {
-    host = el("div", { id: "chatcrip-root" });
+    host = el("div", { id: "hearthly-root" });
     root = host.attachShadow ? host.attachShadow({ mode: "open" }) : host;
     doc.body.appendChild(host);
     render();
@@ -309,7 +310,7 @@
       wrap.appendChild(panel);
     }
     var launcher = el("button", { class: "launch", "aria-label": S.open ? t("close") : w.title || t("title"), "aria-expanded": S.open ? "true" : "false", onclick: function () { setOpen(!S.open); } },
-      [svg(S.open ? "close" : w.launcherIcon || "bubble", 26), !S.open && w.launcherText ? el("span", { text: w.launcherText }) : null]);
+      [svg(S.open ? "close" : w.launcherIcon || "hearth", 26), !S.open && w.launcherText ? el("span", { text: w.launcherText }) : null]);
     wrap.appendChild(el("div", { style: "position:relative" }, [launcher, S.unread && !S.open ? el("span", { class: "badge", "aria-label": S.unread + " unread", text: String(S.unread) }) : null]));
     root.appendChild(wrap);
     var body = root.querySelector(".body");
@@ -324,7 +325,7 @@
     var item = { name: file.name || "pasted-image.png", id: null };
     S.uploads.push(item); render();
     var fd = new FormData(); fd.append("file", file, item.name);
-    fetch(ORIGIN + "/api/widget/upload", { method: "POST", headers: { "X-ChatCrip-Token": S.token }, body: fd })
+    fetch(ORIGIN + "/api/widget/upload", { method: "POST", headers: { "Hearthly-Token": S.token }, body: fd })
       .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error); return j; }); })
       .then(function (j) { Object.assign(item, j); render(); })
       .catch(function (e) { S.uploads.splice(S.uploads.indexOf(item), 1); err = e.message || t("uploadFailed"); render(); });
@@ -446,8 +447,8 @@
       else if (verb === "off") Api.off(key, val);
     },
   };
-  window.ChatCrip = Api;
-  window.$chatcrip = { push: Api.push };
+  window.Hearthly = Api;
+  window.$hearthly = { push: Api.push };
 
   // ---------------------------------------------------------------- boot
   function boot() {
@@ -475,12 +476,12 @@
 
   function start() {
     if (PREVIEW) {
-      window.addEventListener("message", function (e) { if (e.origin === ORIGIN && e.data && e.data.type === "chatcrip:preview") previewBoot(e.data.config); });
-      if (window.parent !== window) window.parent.postMessage({ type: "chatcrip:preview-ready" }, ORIGIN);
+      window.addEventListener("message", function (e) { if (e.origin === ORIGIN && e.data && e.data.type === "hearthly:preview") previewBoot(e.data.config); });
+      if (window.parent !== window) window.parent.postMessage({ type: "hearthly:preview-ready" }, ORIGIN);
       return;
     }
     fetch(ORIGIN + "/api/widget/config?website=" + encodeURIComponent(WID)).then(function (r) { return r.json(); }).then(function (cfg) {
-      if (cfg.error) return console.warn("[ChatCrip] " + cfg.error);
+      if (cfg.error) return console.warn("[Hearthly] " + cfg.error);
       S.cfg = cfg; S.status = cfg.status;
       mount();
       if (hiddenHere()) host.style.display = "none";
@@ -489,7 +490,7 @@
         var auto = w.autoOpenAfterSec > 0 && (!w.autoOpenOnUrls || !w.autoOpenOnUrls.length || w.autoOpenOnUrls.some(function (p) { return globMatch(p, location.href); }));
         if (auto && !store("autoopened")) setTimeout(function () { if (!S.open) { store("autoopened", "1"); setOpen(true); } }, w.autoOpenAfterSec * 1000);
       });
-    }).catch(function (e) { console.warn("[ChatCrip] failed to load", e); }).then(function () {
+    }).catch(function (e) { console.warn("[Hearthly] failed to load", e); }).then(function () {
       queued.forEach(function (c) { Api.push(c); });
     });
   }

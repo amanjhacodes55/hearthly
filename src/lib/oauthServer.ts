@@ -26,8 +26,8 @@ export async function authenticateClient(req: Request, b: Record<string, string>
 }
 
 export async function issueTokens(o: { installation: unknown; app: unknown; website: unknown; scopes: string[] }) {
-  const access = `cc_at_${rand(32)}`;
-  const refresh = `cc_rt_${rand(32)}`;
+  const access = `hly_at_${rand(32)}`;
+  const refresh = `hly_rt_${rand(32)}`;
   await OAuthToken.create({
     installation: o.installation,
     app: o.app,

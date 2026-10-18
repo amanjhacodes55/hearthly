@@ -27,7 +27,7 @@ export default function OAuthConsent({ app, scopes, websites, current, params, u
         <LogoMark size={52} />
       </div>
       <h1 className="h-display mt-5 text-center text-xl font-bold">
-        {app.name} wants access to your ChatCrip workspace
+        {app.name} wants access to your Hearthly workspace
       </h1>
       {app.description && <p className="mt-1 text-center text-sm text-muted">{app.description}</p>}
       {!websites.length ? (

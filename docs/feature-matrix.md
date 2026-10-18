@@ -1,15 +1,15 @@
-# ChatCrip vs Crisp — feature matrix
+# Hearthly vs Crisp — feature matrix
 
 An honest comparison against Crisp's public feature set (shared inbox, chat widget, CRM, campaigns,
 chatbot, knowledge base, status page, integrations, APIs). Crisp is a mature commercial product with
-years of polish, native mobile apps and AI features; ChatCrip is a young open-source project that
+years of polish, native mobile apps and AI features; Hearthly is a young open-source project that
 aims to match the core and go further on UX details and the developer platform.
 
-Legend: ✅ on par · ➕ ChatCrip does more / better · 🟡 partial · ⏳ not yet
+Legend: ✅ on par · ➕ Hearthly does more / better · 🟡 partial · ⏳ not yet
 
 ## Inbox & conversations
 
-| Capability | ChatCrip | Notes |
+| Capability | Hearthly | Notes |
 |---|---|---|
 | Shared team inbox | ✅ | Open / pending / snoozed / resolved, assign, tags, search across people *and* message text |
 | Realtime updates | ✅ | Server-Sent Events with automatic reconnect + polling fallback |
@@ -27,7 +27,7 @@ Legend: ✅ on par · ➕ ChatCrip does more / better · 🟡 partial · ⏳ not
 
 ## Chat widget
 
-| Capability | ChatCrip | Notes |
+| Capability | Hearthly | Notes |
 |---|---|---|
 | One-line embed, async | ✅ | `<script src=".../widget.js" data-website="ID" async>` — ~32 KB minified / ~11 KB gzipped |
 | Style isolation | ✅ | Shadow DOM |
@@ -45,7 +45,7 @@ Legend: ✅ on par · ➕ ChatCrip does more / better · 🟡 partial · ⏳ not
 
 ## Contacts, tracking & analytics
 
-| Capability | ChatCrip | Notes |
+| Capability | Hearthly | Notes |
 |---|---|---|
 | Visitor profile (location, device, pages, referrer, UTM, sessions, custom data, events, notes) | ✅ | Location from edge headers / time zone / language — no paid geo-IP |
 | Live visitors + proactive chat | ✅ | |
@@ -57,7 +57,7 @@ Legend: ✅ on par · ➕ ChatCrip does more / better · 🟡 partial · ⏳ not
 
 ## Automation & engagement
 
-| Capability | ChatCrip | Notes |
+| Capability | Hearthly | Notes |
 |---|---|---|
 | Triggers (URL, time on page, returning, UTM, referrer, country, language, device…) | ✅ | Glob URL patterns (no user regex → no ReDoS) |
 | Trigger actions: message, open widget, tag, assign | ✅ | |
@@ -68,7 +68,7 @@ Legend: ✅ on par · ➕ ChatCrip does more / better · 🟡 partial · ⏳ not
 
 ## Knowledge base & status
 
-| Capability | ChatCrip | Notes |
+| Capability | Hearthly | Notes |
 |---|---|---|
 | Markdown articles, categories, public help center per website | ✅ | Safe React renderer (no `dangerouslySetInnerHTML`) |
 | Multilingual help center, custom domain | ⏳ | |
@@ -76,7 +76,7 @@ Legend: ✅ on par · ➕ ChatCrip does more / better · 🟡 partial · ⏳ not
 
 ## Developer platform
 
-| Capability | ChatCrip | Notes |
+| Capability | Hearthly | Notes |
 |---|---|---|
 | REST API | ➕ | Scoped API keys (hashed at rest), consistent `{error:{code,message}}`, pagination, token-bucket rate limits |
 | Webhooks | ➕ | HMAC-SHA256 + timestamp signature, exponential retries, per-attempt request/response log, manual redeliver, SSRF protection |
@@ -84,4 +84,4 @@ Legend: ✅ on par · ➕ ChatCrip does more / better · 🟡 partial · ⏳ not
 | Inbound channel API | ➕ | Post visitor messages from any platform; contact threading by `channel + external_id` |
 | Realtime API for third parties (WebSocket RTM) | ⏳ | Webhooks cover server-side use; SSE is dashboard/widget-only |
 | Public integrations marketplace | ⏳ | Apps are installable by anyone with the link; no directory yet |
-| Open source & self-hostable | ➕ | MIT, one Docker image, MongoDB |
+| Open source & self-hostable | ➕ | AGPL-3.0-or-later, one Docker image, MongoDB |

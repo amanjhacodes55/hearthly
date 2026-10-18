@@ -15,7 +15,8 @@ type W = {
   allowAttachments: boolean; allowRating: boolean; allowTranscript: boolean; kbSearch: boolean; quickReplies: { label: string; reply: string; tag: string }[];
 };
 const PRESETS = [
-  ["#0d9488", "#f97362"],
+  ["#c2410c", "#8e2c5a"],
+  ["#0d9488", "#0f766e"],
   ["#4f46e5", "#ec4899"],
   ["#0f172a", "#38bdf8"],
   ["#ea580c", "#facc15"],
@@ -41,7 +42,7 @@ export default function WidgetSettings({ ctx }: { ctx: SettingsCtx }) {
   const push = useCallback(() => {
     if (!w || !frame.current?.contentWindow) return;
     frame.current.contentWindow.postMessage(
-      { type: "chatcrip:preview", config: { website: { id: "preview", name: data?.name || ctx.website.name, logo: "" }, widget: w, team: w.showTeam ? (team?.members || []).slice(0, 3).map((m) => ({ name: m.name.split(" ")[0], avatar: m.image })) : [], status: { online: true, withinHours: true }, help: `/help/${ctx.website.publicId}` } },
+      { type: "hearthly:preview", config: { website: { id: "preview", name: data?.name || ctx.website.name, logo: "" }, widget: w, team: w.showTeam ? (team?.members || []).slice(0, 3).map((m) => ({ name: m.name.split(" ")[0], avatar: m.image })) : [], status: { online: true, withinHours: true }, help: `/help/${ctx.website.publicId}` } },
       window.location.origin,
     );
   }, [w, team, data, ctx.website]);
@@ -50,7 +51,7 @@ export default function WidgetSettings({ ctx }: { ctx: SettingsCtx }) {
     return () => clearTimeout(t);
   }, [push]);
   useEffect(() => {
-    const onMsg = (e: MessageEvent) => e.origin === window.location.origin && e.data?.type === "chatcrip:preview-ready" && push();
+    const onMsg = (e: MessageEvent) => e.origin === window.location.origin && e.data?.type === "hearthly:preview-ready" && push();
     window.addEventListener("message", onMsg);
     return () => window.removeEventListener("message", onMsg);
   }, [push]);
@@ -106,6 +107,7 @@ export default function WidgetSettings({ ctx }: { ctx: SettingsCtx }) {
               </Field>
               <Field label="Launcher icon">
                 <select className="input" value={w.launcherIcon} onChange={(e) => set({ launcherIcon: e.target.value })}>
+                  <option value="hearth">Hearth (default)</option>
                   <option value="bubble">Bubble</option>
                   <option value="wave">Wave</option>
                   <option value="spark">Spark</option>
@@ -134,7 +136,7 @@ export default function WidgetSettings({ ctx }: { ctx: SettingsCtx }) {
           </div>
           <div className="mt-3 grid gap-x-6 sm:grid-cols-2">
             <Switch checked={w.showTeam} onChange={(v) => set({ showTeam: v })} label="Show team avatars" />
-            <Switch checked={w.showBranding} onChange={(v) => set({ showBranding: v })} label="Show “Chat by ChatCrip”" />
+            <Switch checked={w.showBranding} onChange={(v) => set({ showBranding: v })} label="Show “Chat by Hearthly”" />
             <Switch checked={w.allowAttachments} onChange={(v) => set({ allowAttachments: v })} label="Allow file attachments" />
             <Switch checked={w.allowRating} onChange={(v) => set({ allowRating: v })} label="Ask for a rating when resolved" />
             <Switch checked={w.allowTranscript} onChange={(v) => set({ allowTranscript: v })} label="Offer email transcript" />

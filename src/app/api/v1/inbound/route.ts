@@ -20,7 +20,7 @@ const schema = z.object({
 
 /**
  * Inbound channel API — lets a bridge (Slack, Telegram, WhatsApp, SMS, email…) post a *visitor* message into
- * ChatCrip. The contact is matched by `channel + external_id`, then email; operator replies come back to your
+ * Hearthly. The contact is matched by `channel + external_id`, then email; operator replies come back to your
  * bridge through the `message.sent` webhook (check `data.conversation.channel`).
  */
 export const POST = v1("messages:write", async (req, ctx) => {

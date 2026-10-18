@@ -43,7 +43,7 @@ export default function AuthForm({ mode, google }: { mode: "login" | "register";
     <div className="grid min-h-screen lg:grid-cols-2">
       <div className="flex flex-col justify-center px-6 py-12 sm:px-12">
         <div className="mx-auto w-full max-w-sm">
-          <Link href="/" aria-label="ChatCrip home">
+          <Link href="/" aria-label="Hearthly home">
             <Logo />
           </Link>
           <h1 className="h-display mt-10 text-3xl font-bold">{mode === "login" ? "Welcome back" : "Create your account"}</h1>
@@ -80,21 +80,21 @@ export default function AuthForm({ mode, google }: { mode: "login" | "register";
             </button>
           )}
           <p className="mt-6 text-center text-sm text-muted">
-            {mode === "login" ? "New to ChatCrip? " : "Already have an account? "}
+            {mode === "login" ? "New to Hearthly? " : "Already have an account? "}
             <Link className="font-semibold text-brand" href={`${mode === "login" ? "/register" : "/login"}${sp.get("next") ? `?next=${encodeURIComponent(next)}` : ""}`}>
               {mode === "login" ? "Create an account" : "Sign in"}
             </Link>
           </p>
         </div>
       </div>
-      <div className="relative hidden overflow-hidden bg-[#0b1114] lg:block">
-        <div className="absolute inset-0 bg-[radial-gradient(600px_400px_at_20%_20%,rgba(20,184,166,.35),transparent),radial-gradient(500px_400px_at_80%_80%,rgba(249,115,98,.28),transparent)]" />
+      <div className="relative hidden overflow-hidden bg-[#1a1123] lg:block">
+        <div className="absolute inset-0 bg-[radial-gradient(600px_400px_at_20%_20%,rgba(255,107,61,.35),transparent),radial-gradient(500px_400px_at_80%_80%,rgba(255,181,71,.28),transparent)]" />
         <div className="relative flex h-full flex-col justify-center gap-4 p-16 text-white">
           <p className="h-display max-w-md text-4xl font-bold leading-tight">Every conversation, one calm inbox.</p>
           <p className="max-w-md text-white/70">Live chat, visitor tracking, automations and an API-first platform — open source and yours to host.</p>
           <div className="mt-6 max-w-sm space-y-3">
             {["Hi! Do you ship to Canada? 🇨🇦", "We do — 3–5 days, free over $50 📦", "Perfect, ordering now!"].map((t, i) => (
-              <div key={i} className={`animate-floaty w-fit rounded-2xl px-4 py-2.5 text-sm shadow-lg ${i % 2 ? "ml-auto bg-gradient-to-br from-teal-500 to-teal-700" : "bg-white/10 backdrop-blur"}`} style={{ animationDelay: `${i * 0.8}s` }}>
+              <div key={i} className={`animate-floaty w-fit rounded-2xl px-4 py-2.5 text-sm shadow-lg ${i % 2 ? "ml-auto bg-gradient-to-br from-ember-500 to-ember-700" : "bg-white/10 backdrop-blur"}`} style={{ animationDelay: `${i * 0.8}s` }}>
                 {t}
               </div>
             ))}

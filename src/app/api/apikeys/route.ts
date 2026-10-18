@@ -13,7 +13,7 @@ export const GET = route(async (_req, ctx) => {
 export const POST = route(async (req, ctx) => {
   const b = await body(req, z.object({ name: z.string().trim().min(1).max(60), scopes: z.array(z.enum(API_KEY_SCOPES)).min(1) }));
   if ((await ApiKey.countDocuments({ website: ctx.website.id })) >= 50) return err("Limit of 50 API keys");
-  const key = `cc_key_${rand(28)}`;
+  const key = `hly_key_${rand(28)}`;
   const k = await ApiKey.create({ website: ctx.website.id, name: b.name, scopes: b.scopes, prefix: key.slice(0, 14), hash: sha256(key), createdBy: ctx.user.id });
   return json({ id: String(k._id), name: k.name, scopes: k.scopes, prefix: k.prefix, key }, 201);
 }, { role: "admin" });

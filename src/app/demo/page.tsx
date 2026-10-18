@@ -5,15 +5,15 @@ import { Logo } from "@/components/ui";
 import DemoControls from "@/components/DemoControls";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Live demo", description: "Try the ChatCrip chat widget on a demo website." };
+export const metadata = { title: "Live demo", description: "Try the Hearthly chat widget on a demo website." };
 
 export default async function Demo() {
   const id = await ensureDemoSite().catch(() => null);
   return (
     <div className="min-h-screen bg-[#fbfaf7] text-[#1d1b16]">
-      <div className="border-b border-black/5 bg-[#0b1114] px-5 py-2 text-center text-xs text-white/80">
+      <div className="border-b border-black/5 bg-[#1a1123] px-5 py-2 text-center text-xs text-white/80">
         This is a fake product site running the real <Logo size={14} className="mx-1 align-middle text-white" /> widget.{" "}
-        <Link href="/register" className="font-semibold text-teal-300 underline">
+        <Link href="/register" className="font-semibold text-ember-300 underline">
           Create your own inbox
         </Link>{" "}
         to answer chats in realtime.

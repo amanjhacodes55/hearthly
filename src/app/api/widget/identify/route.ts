@@ -17,7 +17,7 @@ const schema = z.object({
 });
 
 /**
- * Visitor identification from the widget (pre-chat form or ChatCrip.identify()).
+ * Visitor identification from the widget (pre-chat form or Hearthly.identify()).
  * If the website has identity verification enabled, pass user_hash = HMAC-SHA256(identitySecret, email)
  * to mark the identity as trusted (enables merging with existing contacts of that email).
  */

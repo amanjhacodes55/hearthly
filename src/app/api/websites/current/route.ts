@@ -32,7 +32,7 @@ const widgetSchema = z
     gradient: z.boolean(),
     theme: z.enum(["light", "dark", "auto"]),
     position: z.enum(["left", "right"]),
-    launcherIcon: z.enum(["bubble", "wave", "spark", "help"]),
+    launcherIcon: z.enum(["hearth", "bubble", "wave", "spark", "help"]),
     launcherText: z.string().max(30),
     radius: z.number().int().min(0).max(28),
     title: z.string().max(60),

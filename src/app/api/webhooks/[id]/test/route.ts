@@ -8,7 +8,7 @@ export const POST = route<{ id: string }>(async (_req, ctx, { id }) => {
   const w = await Webhook.findOne({ _id: oid(id), website: ctx.website.id }).select("_id").lean();
   if (!w) return err("Not found", 404);
   const eventId = `evt_${randomUUID().replace(/-/g, "")}`;
-  const payload = JSON.stringify({ id: eventId, event: "ping", website_id: ctx.website.id, created_at: new Date().toISOString(), data: { message: "Hello from ChatCrip 👋" } });
+  const payload = JSON.stringify({ id: eventId, event: "ping", website_id: ctx.website.id, created_at: new Date().toISOString(), data: { message: "Hello from Hearthly 👋" } });
   const d = await WebhookDelivery.create({ webhook: w._id, website: ctx.website.id, event: "ping", eventId, payload });
   await attemptDelivery(String(d._id));
   const fresh = await WebhookDelivery.findById(d._id).lean();

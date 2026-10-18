@@ -1,4 +1,4 @@
-"""Verify a ChatCrip webhook signature (standard library only)."""
+"""Verify a Hearthly webhook signature (standard library only)."""
 import hashlib
 import hmac
 import time

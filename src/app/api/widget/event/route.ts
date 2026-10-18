@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export const OPTIONS = options;
 const schema = z.object({ name: z.string().trim().min(1).max(60).regex(/^[\w .:\-/]+$/), props: z.record(z.union([z.string().max(300), z.number(), z.boolean(), z.null()])).default({}), url: z.string().max(2000).default("") });
 
-/** ChatCrip.track(name, props) */
+/** Hearthly.track(name, props) */
 export const POST = visitorRoute(
   async (req, { site, contact }) => {
     const p = schema.safeParse(await req.json().catch(() => ({})));

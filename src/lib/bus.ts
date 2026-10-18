@@ -1,12 +1,12 @@
 import { EventEmitter } from "node:events";
 
 /**
- * In-process pub/sub that feeds the SSE streams. ChatCrip is designed to run as a single instance
+ * In-process pub/sub that feeds the SSE streams. Hearthly is designed to run as a single instance
  * (Render free tier); swap this for Redis pub/sub to scale horizontally.
  * Topics: `site:<websiteId>` (agents) and `visitor:<contactId>` (that visitor's widget).
  */
-const g = globalThis as unknown as { _ccBus?: EventEmitter; _ccPresence?: Map<string, Map<string, number>> };
-export const bus = (g._ccBus ??= (() => {
+const g = globalThis as unknown as { _hlyBus?: EventEmitter; _hlyPresence?: Map<string, Map<string, number>> };
+export const bus = (g._hlyBus ??= (() => {
   const e = new EventEmitter();
   e.setMaxListeners(0);
   return e;
@@ -20,7 +20,7 @@ export function subscribe(topic: string, fn: (e: BusEvent) => void) {
 }
 
 /** Agent presence per website: userId → open SSE connection count. */
-const presence = (g._ccPresence ??= new Map());
+const presence = (g._hlyPresence ??= new Map());
 export function agentOnline(websiteId: string, userId: string, delta: 1 | -1) {
   const m = presence.get(websiteId) ?? new Map<string, number>();
   const n = (m.get(userId) || 0) + delta;

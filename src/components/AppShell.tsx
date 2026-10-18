@@ -5,7 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import clsx from "clsx";
 import { BarChart3, BookOpen, Check, ChevronsUpDown, Code2, LogOut, Megaphone, MessagesSquare, Moon, Plus, Radar, Settings, Sun, Users, Zap, Monitor, Bell, BellOff } from "lucide-react";
-import { Avatar, LogoMark } from "@/components/ui";
+import { Avatar, LogoMark, Wordmark } from "@/components/ui";
+import { SOURCE_URL } from "@/lib/brand";
 import { RealtimeProvider, chime, useRealtime, useRealtimeEvent } from "@/components/Realtime";
 import { api } from "@/lib/client";
 import type { SConversation, SMessage } from "@/lib/serialize";
@@ -26,7 +27,7 @@ const NAV = [
 
 export function setTheme(t: "light" | "dark" | "system") {
   try {
-    localStorage.setItem("cc-theme", t);
+    localStorage.setItem("hearthly-theme", t);
   } catch {}
   const dark = t === "dark" || (t === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
   document.documentElement.dataset.theme = dark ? "dark" : "light";
@@ -42,7 +43,7 @@ function WebsiteSwitcher({ ctx }: { ctx: ShellCtx }) {
   return (
     <div className="relative">
       <button onClick={() => setOpen(!open)} aria-expanded={open} aria-haspopup="menu" className="flex w-full items-center gap-2.5 rounded-xl border border-border bg-surface px-2.5 py-2 text-left hover:bg-surface-2">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-teal-500 to-teal-700 text-sm font-bold text-white">{ctx.website.name.slice(0, 1).toUpperCase()}</span>
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-ember-500 to-ember-700 text-sm font-bold text-white">{ctx.website.name.slice(0, 1).toUpperCase()}</span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-semibold">{ctx.website.name}</span>
           <span className="block truncate text-[11px] capitalize text-faint">{ctx.website.role}</span>
@@ -97,7 +98,7 @@ function Notifier({ ctx, setUnread }: { ctx: ShellCtx; setUnread: (n: number) =>
     if (message.from !== "visitor") return;
     const viewing = pathname.startsWith("/app/inbox") && new URLSearchParams(window.location.search).get("c") === conversation.id && !document.hidden;
     if (viewing) return;
-    if (localStorage.getItem("cc-sound") !== "off") chime();
+    if (localStorage.getItem("hearthly-sound") !== "off") chime();
     if (typeof Notification !== "undefined" && Notification.permission === "granted" && (document.hidden || !pathname.startsWith("/app/inbox"))) {
       const n = new Notification(`${conversation.contact?.name || conversation.contact?.email || "Visitor"} · ${ctx.website.name}`, { body: message.text || "📎 Attachment", tag: conversation.id, icon: "/logo.svg" });
       n.onclick = () => {
@@ -118,8 +119,8 @@ function Shell({ ctx, children }: { ctx: ShellCtx; children: React.ReactNode }) 
   const { connected } = useRealtime();
   const baseTitle = useRef<string>("");
   useEffect(() => {
-    setThemeState(localStorage.getItem("cc-theme") || "system");
-    setSound(localStorage.getItem("cc-sound") !== "off");
+    setThemeState(localStorage.getItem("hearthly-theme") || "system");
+    setSound(localStorage.getItem("hearthly-sound") !== "off");
   }, []);
   useEffect(() => {
     if (!baseTitle.current || !document.title.startsWith("(")) baseTitle.current = document.title;
@@ -133,9 +134,7 @@ function Shell({ ctx, children }: { ctx: ShellCtx; children: React.ReactNode }) 
       <aside className="hidden w-60 shrink-0 flex-col border-r border-border bg-surface md:flex" aria-label="Main navigation">
         <div className="flex items-center gap-2 px-4 pb-3 pt-4">
           <LogoMark size={28} />
-          <span className="h-display text-lg font-extrabold">
-            Chat<span className="text-brand">Crip</span>
-          </span>
+          <Wordmark className="text-xl" />
           <span className={clsx("ml-auto size-2 rounded-full", connected ? "bg-success" : "bg-warn")} title={connected ? "Realtime connected" : "Reconnecting… (polling)"} aria-label={connected ? "Realtime connected" : "Realtime reconnecting"} />
         </div>
         <div className="px-3">
@@ -146,10 +145,16 @@ function Shell({ ctx, children }: { ctx: ShellCtx; children: React.ReactNode }) 
             <Link key={n.key} href={n.href} className="nav-item" aria-current={active(n.href) ? "page" : undefined}>
               <n.icon className="size-[18px]" />
               <span className="flex-1">{n.label}</span>
-              {n.key === "inbox" && unread > 0 && <span className="rounded-full bg-accent px-1.5 text-[11px] font-bold text-white">{unread}</span>}
+              {n.key === "inbox" && unread > 0 && <span className="rounded-full bg-accent px-1.5 text-[11px] font-bold text-accent-fg">{unread}</span>}
             </Link>
           ))}
         </nav>
+        <p className="px-5 pb-2 text-[10.5px] text-faint">
+          Hearthly · AGPL-3.0 ·{" "}
+          <a href={SOURCE_URL} target="_blank" rel="noopener noreferrer" className="underline-offset-2 hover:text-text hover:underline">
+            source code
+          </a>
+        </p>
         <div className="relative border-t border-border p-3">
           <button onClick={() => setMenu(!menu)} className="flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 hover:bg-surface-2" aria-haspopup="menu" aria-expanded={menu}>
             <Avatar name={ctx.user.name} image={ctx.user.image} size={30} online={connected} />
@@ -181,7 +186,7 @@ function Shell({ ctx, children }: { ctx: ShellCtx; children: React.ReactNode }) 
                   onClick={() => {
                     const next = !sound;
                     setSound(next);
-                    localStorage.setItem("cc-sound", next ? "on" : "off");
+                    localStorage.setItem("hearthly-sound", next ? "on" : "off");
                     if (next && typeof Notification !== "undefined" && Notification.permission === "default") void Notification.requestPermission();
                   }}
                 >
@@ -205,7 +210,7 @@ function Shell({ ctx, children }: { ctx: ShellCtx; children: React.ReactNode }) 
             <Link key={n.key} href={n.href} aria-current={active(n.href) ? "page" : undefined} className={clsx("relative flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-medium", active(n.href) ? "text-brand" : "text-muted")}>
               <n.icon className="size-5" />
               {n.key === "visitors" ? "Visitors" : n.label.split(" ").pop()}
-              {n.key === "inbox" && unread > 0 && <span className="absolute right-[22%] top-1 rounded-full bg-accent px-1 text-[9px] font-bold text-white">{unread}</span>}
+              {n.key === "inbox" && unread > 0 && <span className="absolute right-[22%] top-1 rounded-full bg-accent px-1 text-[9px] font-bold text-accent-fg">{unread}</span>}
             </Link>
           ))}
         </nav>

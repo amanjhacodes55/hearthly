@@ -24,12 +24,12 @@ const UserSchema = new Schema(
 export const User = model("User", UserSchema);
 
 export const DEFAULT_WIDGET = {
-  color: "#0d9488",
-  accent: "#f97362",
+  color: "#c2410c",
+  accent: "#8e2c5a",
   gradient: true,
   theme: "auto",
   position: "right",
-  launcherIcon: "bubble",
+  launcherIcon: "hearth",
   launcherText: "",
   radius: 18,
   title: "Chat with us",

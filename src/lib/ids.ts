@@ -29,7 +29,7 @@ export function secret(name: "widget" | "webhook" | "oauth") {
  * tokens reset on restart) so a public default can never be used to forge them; in dev it's fixed.
  */
 export function fallbackSecret(): string {
-  if (process.env.NODE_ENV !== "production") return "chatcrip-dev-secret-change-me";
-  const g = globalThis as unknown as { _chatcripSecret?: string };
-  return (g._chatcripSecret ??= randomBytes(32).toString("base64"));
+  if (process.env.NODE_ENV !== "production") return "hearthly-dev-secret-change-me";
+  const g = globalThis as unknown as { _hearthlySecret?: string };
+  return (g._hearthlySecret ??= randomBytes(32).toString("base64"));
 }
