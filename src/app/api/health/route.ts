@@ -16,6 +16,6 @@ export async function GET(req: Request) {
   } catch (e) {
     const error = e instanceof Error ? e.message : String(e);
     console.error("[health] database unreachable:", error);
-    return Response.json({ ok: !strict, db: "down", error }, { status: strict ? 503 : 200 });
+    return Response.json({ ok: !strict, db: "down" }, { status: strict ? 503 : 200 }); // details stay in the server log
   }
 }
