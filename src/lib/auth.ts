@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { dbConnect } from "@/lib/db";
 import { User } from "@/lib/models";
 import { takeToken } from "@/lib/rateLimit";
+import { fallbackSecret } from "@/lib/ids";
 
 /** Thrown when sign-in fails because MongoDB is unreachable (so the UI says so, instead of "wrong password"). */
 export const DB_DOWN = "DatabaseUnavailable";
@@ -34,7 +35,7 @@ if (googleEnabled) providers.push(Google({ clientId: process.env.GOOGLE_CLIENT_I
 
 export const authOptions: NextAuthOptions = {
   providers,
-  secret: process.env.NEXTAUTH_SECRET || "chatcrip-dev-secret-change-me",
+  secret: process.env.NEXTAUTH_SECRET || fallbackSecret(),
   session: { strategy: "jwt", maxAge: 30 * 86400 },
   pages: { signIn: "/login", error: "/login" },
   callbacks: {

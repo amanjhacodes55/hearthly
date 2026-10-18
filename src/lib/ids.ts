@@ -20,6 +20,16 @@ export function secret(name: "widget" | "webhook" | "oauth") {
     (name === "widget" && process.env.WIDGET_TOKEN_SECRET) ||
     (name === "webhook" && process.env.WEBHOOK_SIGNING_SECRET) ||
     process.env.NEXTAUTH_SECRET ||
-    "chatcrip-dev-secret-change-me";
+    fallbackSecret();
   return createHash("sha256").update(`${name}:${base}`).digest();
+}
+
+/**
+ * Used only when NEXTAUTH_SECRET is unset. In production this is random per process (sessions and
+ * tokens reset on restart) so a public default can never be used to forge them; in dev it's fixed.
+ */
+export function fallbackSecret(): string {
+  if (process.env.NODE_ENV !== "production") return "chatcrip-dev-secret-change-me";
+  const g = globalThis as unknown as { _chatcripSecret?: string };
+  return (g._chatcripSecret ??= randomBytes(32).toString("base64"));
 }
