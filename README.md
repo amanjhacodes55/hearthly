@@ -347,10 +347,16 @@ messaging platform into Hearthly. Runnable, dependency-free examples live in [`e
 - Scheduled campaigns with an email designer
 - Native mobile apps (push notifications)
 
-## Support
+## ☕ Buy me a coffee
 
-Hearthly is free and open source. If it saves you time or money, you can **buy me a coffee** ☕ over UPI
-(Google Pay, PhonePe, Paytm, BHIM) at **+91 8941951465**. Starring the repository helps too.
+I build Hearthly on my own time and keep it free for everyone. If it saved you time, taught you something, or powers
+something you're building, a coffee is the kindest way to say thanks, and every one buys me more hours to build
+and improve Hearthly and my other open-source projects.
+
+**UPI: +91 8941951465**. Pay from any UPI app (Google Pay, PhonePe, Paytm, BHIM); international payments are
+welcome too.
+
+However small, every coffee keeps the work going. Thank you!
 
 ## License
 
