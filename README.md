@@ -347,6 +347,11 @@ messaging platform into Hearthly. Runnable, dependency-free examples live in [`e
 - Scheduled campaigns with an email designer
 - Native mobile apps (push notifications)
 
+## Support
+
+Hearthly is free and open source. If it saves you time or money, you can **buy me a coffee** ☕ over UPI
+(Google Pay, PhonePe, Paytm, BHIM) at **+91 8941951465**. Starring the repository helps too.
+
 ## License
 
 [MIT](LICENSE)
